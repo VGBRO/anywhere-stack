@@ -1,0 +1,8 @@
+{
+  "type": "cos_heartbeat",
+  "portfolio_health": "green",
+  "dispatched": [],
+  "escalations": [],
+  "summary": "Single example project is healthy with no blockers, approvals, or staleness; no attention required.",
+  "timestamp": "2026-09-21T22:34:25.930453+00:00"
+}
