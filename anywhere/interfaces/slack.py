@@ -2,6 +2,7 @@
 
 import os
 import json
+import requests
 from pathlib import Path
 from dotenv import load_dotenv
 from slack_bolt import App
@@ -10,6 +11,7 @@ from anywhere.client import route, reason, Model
 from anywhere.roles.cos import run_cos_heartbeat
 from anywhere.heartbeat import run_project_heartbeat
 from anywhere.state.canonical import append_event
+from anywhere.audio import is_audio_file, transcribe_audio
 
 load_dotenv()
 
@@ -132,6 +134,66 @@ def handle_heartbeat_command(message, say):
             lines.append(f"• {e}")
 
     say("\n".join(lines))
+
+
+@app.event("file_shared")
+def handle_audio_note(event, say, client):
+    """Handle Slack audio notes — transcribe and route through the agent pipeline."""
+    file_id = event.get("file_id") or (event.get("file") or {}).get("id")
+    if not file_id:
+        return
+
+    try:
+        file_info = client.files_info(file=file_id)["file"]
+    except Exception:
+        return
+
+    mimetype = file_info.get("mimetype", "")
+    if not is_audio_file(mimetype):
+        return
+
+    channel = event.get("channel_id") or COS_SLACK_CHANNEL
+    say(channel=channel, text="_Heard you. Transcribing audio note..._")
+
+    # Download the private audio file using the bot token
+    url = file_info.get("url_private_download") or file_info.get("url_private")
+    if not url:
+        say(channel=channel, text="Could not retrieve audio file URL.")
+        return
+
+    audio_response = requests.get(url, headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"})
+    if not audio_response.ok:
+        say(channel=channel, text=f"Failed to download audio file (HTTP {audio_response.status_code}).")
+        return
+
+    try:
+        filename = file_info.get("name", "audio.m4a")
+        transcript = transcribe_audio(audio_response.content, filename=filename)
+    except RuntimeError as e:
+        say(channel=channel, text=f"Transcription not configured: {e}")
+        return
+    except Exception as e:
+        say(channel=channel, text=f"Transcription failed: {e}")
+        return
+
+    say(channel=channel, text=f"_Transcribed:_ \"{transcript}\"")
+
+    # Route through the same pipeline as a text message
+    classified = _classify_message(transcript)
+    msg_type = classified.get("type", "unknown")
+    project = classified.get("project")
+
+    if msg_type == "directive":
+        response = _handle_directive(transcript, project)
+    elif msg_type == "status":
+        response = _handle_status(project)
+    elif msg_type == "question":
+        system = "You are the Chief of Staff answering a question about the portfolio. Be concise and factual."
+        response = reason(f"Question: {transcript}\n\nContext:\n{_handle_status(project)}", system=system, model=Model.SUPER)
+    else:
+        response = f"Got it: \"{transcript[:200]}\". If this is a directive, try prefixing with a project name."
+
+    say(channel=channel, text=response)
 
 
 def post_to_cos_channel(message: str) -> None:
