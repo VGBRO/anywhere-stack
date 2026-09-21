@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from anywhere.client import reason, Model
-from anywhere.state.canonical import append_event, read_agent_os, read_state
+from anywhere.state.canonical import append_event, parse_json, read_agent_os, read_state
 
 
 def execute_task(repo_path: str, task: dict) -> dict:
@@ -26,9 +26,13 @@ Your authority: implement what is asked, record evidence, do not alter acceptanc
 {f"Role skill:{chr(10)}{role_skill}" if role_skill else ""}
 {f"Contract:{chr(10)}{contract}" if contract else ""}
 
+If the task produces a file (a document, README, plan, analysis), include the FULL file content in the "file_output" field along with the relative path in "file_path". The system will write it to disk — you do not need to simulate writing.
+
 Respond in JSON:
 {{
-  "output": "the result of the task",
+  "output": "one-sentence summary of what was done",
+  "file_path": "relative/path/to/file.md or null",
+  "file_output": "full file content to write, or null",
   "evidence": ["evidence item 1", "evidence item 2"],
   "state_delta": "what changed in the project state",
   "unresolved": ["anything left open"],
@@ -50,15 +54,16 @@ Execute this task and return the result."""
 
     raw = reason(prompt, system=system, model=Model.SUPER)
 
-    try:
-        raw_clean = raw.strip()
-        if "```" in raw_clean:
-            raw_clean = raw_clean.split("```")[1]
-            if raw_clean.startswith("json"):
-                raw_clean = raw_clean[4:]
-        result = json.loads(raw_clean.strip())
-    except Exception:
-        result = {"output": raw, "evidence": [], "state_delta": "", "unresolved": [], "confidence": "low"}
+    result = parse_json(raw)
+    if not result:
+        result = {"output": (raw or "")[:500], "evidence": [], "state_delta": "", "unresolved": [], "confidence": "low"}
+
+    # Materialize file output if the Builder produced file content
+    if result.get("file_path") and result.get("file_output"):
+        out_path = Path(repo_path) / result["file_path"]
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(result["file_output"])
+        result["evidence"] = result.get("evidence", []) + [f"Written: {result['file_path']}"]
 
     append_event(repo_path, {
         "type": "task_execution",

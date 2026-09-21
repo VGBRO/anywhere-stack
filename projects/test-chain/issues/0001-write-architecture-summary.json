@@ -1,0 +1,10 @@
+{
+  "id": "0001",
+  "title": "Write architecture summary",
+  "description": "Write a brief architecture.md that explains the Anywhere Stack architecture: repo-centric design, CoS/PM/Builder roles, Nemotron model tiers, and Slack interface.",
+  "priority": "high",
+  "status": "done",
+  "assigned_to": null,
+  "created_at": "2026-09-21T22:45:13.212716+00:00",
+  "resolution": "Created architecture.md file in repository root covering repo-centric design, CoS/PM/Builder roles, Nemotron model tiers, and Slack interface."
+}

@@ -5,11 +5,13 @@ from pathlib import Path
 from anywhere.client import reason, Model
 from anywhere.state.canonical import (
     append_event,
+    parse_json,
     read_agent_os,
     read_open_issues,
     read_recent_events,
     read_state,
 )
+from anywhere.roles.builder import execute_task
 
 
 def create_issue(repo_path: str, title: str, description: str, priority: str = "medium") -> dict:
@@ -76,6 +78,15 @@ def run_pm_triage(repo_path: str) -> dict:
     system = f"""You are a Project Manager running a triage heartbeat.
 Inspect the project state, prioritize open issues, and determine the single most important next action.
 
+PRIORITY ORDER:
+1. Open issues in issues/ — always take precedence over anything in state.md
+2. Blockers preventing all progress
+3. Stale or missing state
+
+CRITICAL RULE: If the highest-priority work is bounded and executable (writing a document, analyzing state, generating output, making a plan) — you MUST set delegate_to_builder to true AND populate builder_task. Do not describe what should happen; make it happen by setting the flag.
+Only set delegate_to_builder to false if the work is blocked, needs a human decision, or requires external access you cannot specify.
+Never create a task to "run a heartbeat" — heartbeats are system events, not Builder tasks.
+
 {f"Role skill:{chr(10)}{role_skill}" if role_skill else ""}
 
 Respond in JSON:
@@ -84,24 +95,40 @@ Respond in JSON:
   "blockers": ["blocker 1"],
   "recommended_action": "one clear next action",
   "health": "green|yellow|red",
-  "notes": "any other observations"
+  "notes": "any other observations",
+  "delegate_to_builder": true,
+  "builder_task": {{
+    "objective": "specific, bounded task description",
+    "constraints": "what the builder must not change",
+    "authority": "what the builder may decide without asking",
+    "acceptance": "how completion is verified"
+  }}
 }}"""
 
     raw = reason(context, system=system, model=Model.SUPER)
 
-    try:
-        raw_clean = raw.strip()
-        if "```" in raw_clean:
-            raw_clean = raw_clean.split("```")[1]
-            if raw_clean.startswith("json"):
-                raw_clean = raw_clean[4:]
-        result = json.loads(raw_clean.strip())
-    except Exception:
-        result = {"recommended_action": raw[:200], "health": "yellow", "blockers": []}
+    result = parse_json(raw)
+    if not result:
+        result = {"recommended_action": (raw or "")[:200], "health": "yellow", "blockers": [], "delegate_to_builder": False}
+
+    builder_result = None
+    if result.get("delegate_to_builder") and result.get("builder_task"):
+        task = result["builder_task"]
+        issue = result.get("priority_issue", {})
+        if issue.get("id"):
+            task["issue_id"] = issue["id"]
+            task["issue_title"] = issue.get("title", "")
+        builder_result = execute_task(repo_path, task)
+        result["builder_result"] = builder_result
+        if builder_result.get("confidence") in ("high", "medium") and issue.get("id"):
+            close_issue(repo_path, issue["id"], builder_result.get("output", "Completed by Builder."))
+
+    result["builder_dispatched"] = builder_result is not None
 
     append_event(repo_path, {
         "type": "pm_triage",
         "result": result,
+        "builder_dispatched": result["builder_dispatched"],
     })
 
     return result

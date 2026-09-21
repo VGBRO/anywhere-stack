@@ -1,0 +1,10 @@
+{
+  "id": "0001",
+  "title": "Write project README",
+  "description": "The example-project has no README. Write a concise README explaining what it is and how to use it.",
+  "priority": "high",
+  "status": "done",
+  "assigned_to": null,
+  "created_at": "2026-09-21T22:39:49.124364+00:00",
+  "resolution": "Updated issues/open_issues.json to mark issue #0001 as done with a resolved_at timestamp."
+}

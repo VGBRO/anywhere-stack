@@ -7,6 +7,7 @@ from rich.console import Console
 from anywhere.client import reason, route, Model
 from anywhere.state.canonical import (
     append_event,
+    parse_json,
     read_agent_os,
     read_brief,
     read_decisions,
@@ -119,14 +120,8 @@ Respond in JSON with this exact structure:
     raw = reason(prompt, system=system, model=model)
 
     # Parse response
-    try:
-        # Extract JSON from response (handle markdown code blocks)
-        raw_clean = raw.strip()
-        if "```" in raw_clean:
-            raw_clean = raw_clean.split("```")[1]
-            if raw_clean.startswith("json"):
-                raw_clean = raw_clean[4:]
-        parsed = json.loads(raw_clean.strip())
+    parsed = parse_json(raw)
+    if parsed:
         result.observations = parsed.get("observations", [])
         result.actions_taken = parsed.get("actions_taken", [])
         result.decisions = parsed.get("decisions", [])
@@ -134,8 +129,8 @@ Respond in JSON with this exact structure:
         result.next_actions = parsed.get("next_actions", [])
         result.health = parsed.get("health", "green")
         summary = parsed.get("summary", "Heartbeat completed.")
-    except Exception:
-        result.observations = [raw[:500]]
+    else:
+        result.observations = [(raw or "")[:500]]
         summary = "Heartbeat completed (unparsed response)."
 
     # 3. RECORD — append to canonical history

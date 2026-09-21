@@ -37,8 +37,17 @@ def heartbeat(
             console.print(f"[red]Project not found:[/red] {project_path}")
             raise typer.Exit(1)
         console.print(f"[bold blue]Running {role} heartbeat for {project}...[/bold blue]")
-        from anywhere.heartbeat import run_project_heartbeat
-        run_project_heartbeat(project_path, role=role)
+        if role == "project_manager":
+            from anywhere.roles.pm import run_pm_triage
+            result = run_pm_triage(project_path)
+            health = result.get("health", "green")
+            health_color = {"green": "green", "yellow": "yellow", "red": "red"}.get(health, "white")
+            console.print(f"  [{health_color}]● {health.upper()}[/{health_color}] {result.get('recommended_action', '')}")
+            if result.get("builder_dispatched"):
+                console.print(f"  [cyan]→ Builder completed:[/cyan] {result.get('priority_issue', {}).get('title', 'task')}")
+        else:
+            from anywhere.heartbeat import run_project_heartbeat
+            run_project_heartbeat(project_path, role=role)
 
 
 @app.command()

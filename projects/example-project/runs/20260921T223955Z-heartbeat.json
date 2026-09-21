@@ -1,0 +1,26 @@
+{
+  "type": "heartbeat",
+  "role": "project_manager",
+  "repo": "/Users/vguruvugari/claude/anywhere-stack/projects/example-project",
+  "timestamp": "2026-09-21T22:39:55.716517+00:00",
+  "observations": [
+    "Project is in EXAMPLE phase with health green and no blockers.",
+    "State.md indicates next action is to generate state projections from heartbeat.",
+    "Brief.md confirms last action was initial scaffold created and next action is to run first heartbeat.",
+    "Decisions.md shows initialization logged on 2026-09-21.",
+    "Open issue #0001 (Write project README) is high priority and currently unassigned."
+  ],
+  "actions_taken": [
+    "Inspected agent-os.md, state.md, brief.md, decisions.md, and open issues to assess current project state."
+  ],
+  "decisions": [
+    "Execute the heartbeat to generate state projections as the immediate next action, then address the open README issue."
+  ],
+  "escalations": [],
+  "next_actions": [
+    "Run `anywhere heartbeat example-project` to generate state projections and update records.",
+    "After heartbeat completes, assign open issue #0001 to the Builder role and track its resolution."
+  ],
+  "health": "green",
+  "summary": "Project is ready for its first heartbeat to generate initial state projections before tackling the outstanding README issue."
+}

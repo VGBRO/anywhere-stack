@@ -2,8 +2,27 @@
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+def parse_json(raw: str) -> dict:
+    """Extract and parse JSON from a model response. Handles code fences and bare JSON."""
+    text = (raw or "").strip()
+    # Try bare JSON first
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    # Extract first {...} block — handles code fences even when content has backticks
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except Exception:
+            pass
+    return {}
 
 
 def _runs_dir(repo_path: str) -> Path:

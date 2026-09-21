@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 from rich.console import Console
 from anywhere.client import reason, route, Model
-from anywhere.heartbeat import run_project_heartbeat
-from anywhere.state.canonical import append_event, read_state, read_brief
+from anywhere.roles.pm import run_pm_triage
+from anywhere.state.canonical import append_event, parse_json, read_state, read_brief
 
 console = Console()
 
@@ -61,24 +61,20 @@ Respond in JSON:
     console.print("  [dim]Reasoning with Nemotron Ultra...[/dim]")
     raw = reason(prompt, system=system, model=Model.ULTRA)
 
-    try:
-        raw_clean = raw.strip()
-        if "```" in raw_clean:
-            raw_clean = raw_clean.split("```")[1]
-            if raw_clean.startswith("json"):
-                raw_clean = raw_clean[4:]
-        result = json.loads(raw_clean.strip())
-    except Exception:
-        result = {"attention_required": [], "escalations": [raw[:300]], "portfolio_health": "yellow", "summary": "CoS heartbeat completed (parse error)."}
+    result = parse_json(raw)
+    if not result:
+        result = {"attention_required": [], "escalations": [(raw or "")[:300]], "portfolio_health": "yellow", "summary": "CoS heartbeat completed (parse error)."}
 
     dispatched = []
     for item in result.get("attention_required", []):
         if item.get("action") == "dispatch_pm" and item.get("urgency") in ("high", "medium"):
             project_path = str(Path(portfolio_root) / item["project"])
             if Path(project_path).exists():
-                console.print(f"  [blue]→ Dispatching PM heartbeat:[/blue] {item['project']} ({item['reason']})")
-                run_project_heartbeat(project_path, role="project_manager")
+                console.print(f"  [blue]→ Dispatching PM:[/blue] {item['project']} ({item['reason']})")
+                pm_result = run_pm_triage(project_path)
                 dispatched.append(item["project"])
+                if pm_result.get("builder_dispatched"):
+                    console.print(f"    [cyan]→ Builder dispatched for:[/cyan] {pm_result.get('priority_issue', {}).get('title', 'task')}")
 
     health = result.get("portfolio_health", "green")
     summary = result.get("summary", "Heartbeat complete.")
