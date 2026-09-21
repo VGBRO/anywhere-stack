@@ -1,0 +1,24 @@
+{
+  "type": "heartbeat",
+  "role": "project_manager",
+  "repo": "/Users/vguruvugari/claude/anywhere-stack/projects/example-project",
+  "timestamp": "2026-09-21T21:17:41.972126+00:00",
+  "observations": [
+    "Project is in EXAMPLE phase with health green and no blockers.",
+    "State.md indicates next action is to run first heartbeat to generate projections.",
+    "Brief.md confirms last action was initial scaffold created and next action is to run first heartbeat.",
+    "Decisions.md shows initialization logged on 2026-09-21."
+  ],
+  "actions_taken": [
+    "Reviewed agent-os.md, state.md, brief.md, and decisions.md to assess project state."
+  ],
+  "decisions": [
+    "Execute the first heartbeat to generate state projections as indicated by next_action."
+  ],
+  "escalations": [],
+  "next_actions": [
+    "Run `anywhere heartbeat example-project` to initialize state projections and update records."
+  ],
+  "health": "green",
+  "summary": "Project is ready for its first heartbeat to generate initial state projections."
+}
