@@ -25,21 +25,16 @@ app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 
 
 def _classify_message(text: str) -> dict:
-    """Classify an incoming message as directive, question, approval, or status request."""
+    """Classify an incoming message as directive, question, approval, status, or heartbeat."""
     system = (
         "Classify this message from the human operator of an agentic system. "
-        "Respond in JSON: {\"type\": \"directive|question|approval|status|unknown\", \"project\": \"project name or null\", \"summary\": \"one line summary\"}"
+        "Use type 'heartbeat' if the message is asking to run a heartbeat, health check, or portfolio check. "
+        "Respond in JSON: {\"type\": \"heartbeat|directive|question|approval|status|unknown\", \"project\": \"project name or null\", \"summary\": \"one line summary\"}"
     )
     raw = route(text, system=system, model=Model.LIGHTNING)
-    try:
-        raw_clean = raw.strip()
-        if "```" in raw_clean:
-            raw_clean = raw_clean.split("```")[1]
-            if raw_clean.startswith("json"):
-                raw_clean = raw_clean[4:]
-        return json.loads(raw_clean.strip())
-    except Exception:
-        return {"type": "unknown", "project": None, "summary": text[:100]}
+    from anywhere.state.canonical import parse_json
+    result = parse_json(raw)
+    return result if result else {"type": "unknown", "project": None, "summary": text[:100]}
 
 
 def _handle_directive(text: str, project: str | None) -> str:
@@ -183,7 +178,22 @@ def handle_audio_note(event, say, client):
     msg_type = classified.get("type", "unknown")
     project = classified.get("project")
 
-    if msg_type == "directive":
+    if msg_type == "heartbeat":
+        say(channel=channel, text="Running CoS heartbeat across portfolio...")
+        result = run_cos_heartbeat(PORTFOLIO_ROOT)
+        health = result.get("health", "green")
+        summary = result.get("summary", "Complete.")
+        dispatched = result.get("dispatched", [])
+        escalations = result.get("escalations", [])
+        lines = [f"*Heartbeat complete* — Portfolio: *{health.upper()}*", f"_{summary}_"]
+        if dispatched:
+            lines.append(f"\nDispatched PM heartbeats: {', '.join(dispatched)}")
+        if escalations:
+            lines.append("\n*Requires your attention:*")
+            for e in escalations:
+                lines.append(f"• {e}")
+        response = "\n".join(lines)
+    elif msg_type == "directive":
         response = _handle_directive(transcript, project)
     elif msg_type == "status":
         response = _handle_status(project)

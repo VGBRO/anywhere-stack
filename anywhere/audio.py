@@ -1,9 +1,12 @@
-"""Audio transcription — converts Slack audio notes to text for the agent pipeline."""
+"""Audio transcription — converts Slack audio notes to text for the agent pipeline.
+
+Default: mlx-whisper (on-device, Apple Silicon M-series, no API key needed)
+Fallback: OpenAI-compatible Whisper API (Groq, OpenAI, or custom endpoint)
+"""
 
 import os
 import tempfile
 from pathlib import Path
-from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,27 +17,29 @@ AUDIO_MIME_TYPES = {
     "video/mp4",  # Slack sometimes sends audio notes as video/mp4
 }
 
-_TRANSCRIPTION_PROVIDER = os.getenv("TRANSCRIPTION_PROVIDER", "openai")
 _TRANSCRIPTION_API_KEY = os.getenv("TRANSCRIPTION_API_KEY") or os.getenv("OPENAI_API_KEY")
-_TRANSCRIPTION_BASE_URL = os.getenv("TRANSCRIPTION_BASE_URL")  # None = use default OpenAI endpoint
+_TRANSCRIPTION_BASE_URL = os.getenv("TRANSCRIPTION_BASE_URL")
 _TRANSCRIPTION_MODEL = os.getenv("TRANSCRIPTION_MODEL", "whisper-1")
+_MLX_MODEL = os.getenv("MLX_WHISPER_MODEL", "mlx-community/whisper-base-mlx")
 
 
-def _get_transcription_client() -> OpenAI:
+def _transcribe_mlx(audio_path: str) -> str:
+    import mlx_whisper
+    result = mlx_whisper.transcribe(audio_path, path_or_hf_repo=_MLX_MODEL)
+    return result.get("text", "").strip()
+
+
+def _transcribe_api(audio_bytes: bytes, filename: str) -> str:
+    from openai import OpenAI
     if not _TRANSCRIPTION_API_KEY:
         raise RuntimeError(
-            "No transcription API key found. Set TRANSCRIPTION_API_KEY (or OPENAI_API_KEY) in .env.\n"
-            "Options: OpenAI (https://platform.openai.com), Groq (https://console.groq.com)"
+            "No transcription key found. Either install mlx-whisper (pip install mlx-whisper) "
+            "or set TRANSCRIPTION_API_KEY in .env (Groq: console.groq.com — free tier)."
         )
     kwargs = {"api_key": _TRANSCRIPTION_API_KEY}
     if _TRANSCRIPTION_BASE_URL:
         kwargs["base_url"] = _TRANSCRIPTION_BASE_URL
-    return OpenAI(**kwargs)
-
-
-def transcribe_audio(audio_bytes: bytes, filename: str = "audio.m4a") -> str:
-    """Transcribe raw audio bytes to text using the configured Whisper endpoint."""
-    client = _get_transcription_client()
+    client = OpenAI(**kwargs)
     suffix = Path(filename).suffix or ".m4a"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(audio_bytes)
@@ -47,6 +52,21 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.m4a") -> str:
                 response_format="text",
             )
         return str(result).strip()
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def transcribe_audio(audio_bytes: bytes, filename: str = "audio.m4a") -> str:
+    """Transcribe raw audio bytes. Uses mlx-whisper if available, otherwise API."""
+    suffix = Path(filename).suffix or ".m4a"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+    try:
+        try:
+            return _transcribe_mlx(tmp_path)
+        except ImportError:
+            return _transcribe_api(audio_bytes, filename)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
