@@ -1,7 +1,7 @@
 """Heartbeat engine — wake, inspect, act, record, exit."""
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from rich.console import Console
 from anywhere.client import reason, route, Model
@@ -71,6 +71,78 @@ def _load_project_context(repo_path: str) -> str:
     return "\n\n---\n\n".join(parts) if parts else "(empty project — no state files found)"
 
 
+def _run_teamwork_ingest(repo_path: str, result: HeartbeatResult) -> None:
+    """Pull fresh Slack/GitHub signals into the teamwork graph before reasoning.
+
+    Reads .teamwork_config.json at the repo root. No-ops if the file is absent.
+    Config schema:
+      {
+        "slack_channels": ["#eng"],   // Slack channel names or IDs
+        "github_repos":  ["org/repo"], // GitHub repos to sweep
+        "since_hours":   24            // how far back to look (default 24)
+      }
+    """
+    config_path = Path(repo_path) / ".teamwork_config.json"
+    if not config_path.exists():
+        return
+
+    try:
+        config = json.loads(config_path.read_text())
+    except Exception:
+        return
+
+    slack_channels = config.get("slack_channels", [])
+    github_repos = config.get("github_repos", [])
+    since_hours = config.get("since_hours", 24)
+
+    if not slack_channels and not github_repos:
+        return
+
+    try:
+        from activegraph import Graph
+        from anywhere.connectors import make_teamwork_runtime
+
+        graph = Graph()
+        runtime = make_teamwork_runtime(graph, project_root=repo_path)
+
+        since_iso = (
+            datetime.now(timezone.utc) - timedelta(hours=since_hours)
+        ).isoformat()
+
+        ingested_counts: dict = {}
+
+        if slack_channels:
+            from anywhere.connectors.slack import SlackConnector
+            slack = SlackConnector(repo_path, graph, watched_channels=slack_channels)
+            stats = slack.sweep()
+            ingested_counts.update(stats)
+
+        if github_repos:
+            from anywhere.connectors.github import GitHubConnector
+            github = GitHubConnector(repo_path, graph, watched_repos=github_repos)
+            stats = github.sweep(since_iso=since_iso)
+            ingested_counts.update(stats)
+
+        runtime.run_until_idle()
+
+        total = sum(s.get("ingested", 0) for s in ingested_counts.values())
+        if total > 0:
+            result.observations.append(
+                f"Teamwork ingest: {total} new signals from {len(ingested_counts)} source(s)"
+            )
+
+        append_event(repo_path, {
+            "type":             "heartbeat.teamwork_ingest",
+            "ingested_counts":  ingested_counts,
+            "total_ingested":   total,
+            "since_iso":        since_iso,
+        })
+
+    except Exception as exc:
+        # Ingest failure must never block the heartbeat
+        result.observations.append(f"Teamwork ingest skipped: {exc}")
+
+
 def run_project_heartbeat(repo_path: str, role: str = "project_manager") -> HeartbeatResult:
     """
     Run one bounded heartbeat for a project repo.
@@ -80,6 +152,10 @@ def run_project_heartbeat(repo_path: str, role: str = "project_manager") -> Hear
     project_name = Path(repo_path).name
 
     console.print(f"\n[bold blue]► Heartbeat[/bold blue] {role} @ {project_name}")
+
+    # 0. INGEST — pull fresh signals from Slack/GitHub (if .teamwork_config.json present)
+    console.print("  [dim]Ingesting teamwork signals...[/dim]")
+    _run_teamwork_ingest(repo_path, result)
 
     # 1. INSPECT — load canonical state
     console.print("  [dim]Inspecting state...[/dim]")
