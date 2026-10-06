@@ -185,7 +185,14 @@ def run_teamwork_regimes(repo_path: str, min_occurrences: int = 2) -> dict:
 
     # 2. Pull quality + error events from the canonical run log
     recent = read_recent_events(repo_path, n=200)
-    _QUALITY_TYPES = {"behavior.failed", "github.fetch.error", "github.pr.error"}
+    _QUALITY_TYPES = {
+        "behavior.failed",
+        "github.fetch.error",
+        "github.pr.error",
+        "meet.ingest.error",
+        "meet.drive.error",
+        "entity.disputed",
+    }
     for event in recent:
         if event.get("type") in _QUALITY_TYPES:
             failures.append(event)

@@ -189,6 +189,26 @@ def read_regime_proposals(repo_path: str, limit: int = 5) -> str:
     return "\n".join(lines)
 
 
+def dispute_entity(
+    repo_path: str,
+    entity_id: str,
+    reason: str,
+    disputed_by: str = "human",
+) -> None:
+    """Mark a teamwork entity as disputed.
+
+    Writes an entity.disputed event to the canonical run log. Disputed entities
+    are surfaced with ⚠ in read_teamwork_graph output and picked up by Regimes
+    as a quality signal. Nothing is deleted — disputes are auditable and reversible.
+    """
+    append_event(repo_path, {
+        "type":        "entity.disputed",
+        "entity_id":   entity_id,
+        "reason":      reason,
+        "disputed_by": disputed_by,
+    })
+
+
 def read_teamwork_graph(repo_path: str) -> str:
     """Read the teamwork graph SQLite and return a markdown summary for LLM context.
 
@@ -224,7 +244,9 @@ def read_teamwork_graph(repo_path: str) -> str:
             obj_type = obj.get("type", "")
             obj_id = obj.get("id", "")
             if obj_type in _TYPES and obj_id:
-                objects[obj_id] = dict(obj.get("data", {}))
+                data = dict(obj.get("data", {}))
+                data["_id"] = obj_id  # embed for dispute cross-reference
+                objects[obj_id] = data
                 obj_types[obj_id] = obj_type
 
         patches = conn.execute(
@@ -238,6 +260,21 @@ def read_teamwork_graph(repo_path: str) -> str:
                 objects[target].update(patch.get("value", {}))
 
         conn.close()
+
+        # Load dispute events from canonical run log (runs/*.json)
+        disputed_ids: set[str] = set()
+        runs_dir = Path(repo_path) / "runs"
+        if runs_dir.exists():
+            for f in runs_dir.glob("*.json"):
+                try:
+                    e = json.loads(f.read_text())
+                    if e.get("type") == "entity.disputed":
+                        disputed_ids.add(e.get("entity_id", ""))
+                except Exception:
+                    pass
+
+        def _disputed(data: dict) -> str:
+            return " ⚠ [disputed]" if data.get("_id", "") in disputed_ids else ""
 
         # Build typed buckets
         def _collect(t: str) -> list[dict]:
@@ -261,9 +298,11 @@ def read_teamwork_graph(repo_path: str) -> str:
                 src = "github" if "github.com" in t.get("source", "") else "slack"
                 conf = t.get("confidence", "")
                 label = f"[{src}][{conf}] " if conf else f"[{src}] "
-                lines.append(f"- [ ] {label}{t.get('title', '')}  — {owner}")
+                lines.append(
+                    f"- [ ] {label}{t.get('title', '')}{_disputed(t)}  — {owner}"
+                )
             for t in done_tasks:
-                lines.append(f"- [x] {t.get('title', '')}")
+                lines.append(f"- [x] {t.get('title', '')}{_disputed(t)}")
             sections.append("\n".join(lines))
 
         if all_outcomes:
@@ -271,21 +310,21 @@ def read_teamwork_graph(repo_path: str) -> str:
             for o in all_outcomes:
                 date = (o.get("merged_at") or "")[:10]
                 tag = f"  [{date}]" if date else ""
-                lines.append(f"- {o.get('result', '')}{tag}")
+                lines.append(f"- {o.get('result', '')}{_disputed(o)}{tag}")
             sections.append("\n".join(lines))
 
         if all_decisions:
             lines = ["### Decisions"]
             for d in all_decisions:
                 state = d.get("epistemic_state", "")
-                lines.append(f"- [{state}] {d.get('title', '')}")
+                lines.append(f"- [{state}] {d.get('title', '')}{_disputed(d)}")
             sections.append("\n".join(lines))
 
         if open_blockers:
             lines = ["### Blockers"]
             for b in open_blockers:
                 severity = b.get("severity", "")
-                lines.append(f"- [{severity}] {b.get('description', '')}")
+                lines.append(f"- [{severity}] {b.get('description', '')}{_disputed(b)}")
             sections.append("\n".join(lines))
 
         if not sections:
