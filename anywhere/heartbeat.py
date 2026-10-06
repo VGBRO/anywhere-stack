@@ -99,11 +99,13 @@ def _run_teamwork_ingest(repo_path: str, result: HeartbeatResult) -> None:
     except Exception:
         return
 
-    slack_channels = config.get("slack_channels", [])
-    github_repos = config.get("github_repos", [])
-    since_hours = config.get("since_hours", 24)
+    slack_channels    = config.get("slack_channels", [])
+    github_repos      = config.get("github_repos", [])
+    meet_transcripts  = config.get("meet_transcripts_dir", "")
+    drive_folder_id   = config.get("drive_folder_id", "")
+    since_hours       = config.get("since_hours", 24)
 
-    if not slack_channels and not github_repos:
+    if not slack_channels and not github_repos and not meet_transcripts and not drive_folder_id:
         return
 
     try:
@@ -130,6 +132,17 @@ def _run_teamwork_ingest(repo_path: str, result: HeartbeatResult) -> None:
             github = GitHubConnector(repo_path, graph, watched_repos=github_repos)
             stats = github.sweep(since_iso=since_iso)
             ingested_counts.update(stats)
+
+        if meet_transcripts or drive_folder_id:
+            from anywhere.connectors.googlemeet import GoogleMeetConnector
+            meet = GoogleMeetConnector(
+                repo_path,
+                graph,
+                transcripts_dir=meet_transcripts or None,
+                drive_folder_id=drive_folder_id or None,
+            )
+            stats = meet.sweep(since_iso=since_iso)
+            ingested_counts["google_meet"] = stats
 
         runtime.run_until_idle()
 

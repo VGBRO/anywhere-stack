@@ -13,6 +13,8 @@ app = typer.Typer(
     help="Repo-centric modular agent stack — powered by NVIDIA Nemotron on Nebius.",
     no_args_is_help=True,
 )
+graph_app = typer.Typer(help="Teamwork Graph — status, disputes, and queries.")
+app.add_typer(graph_app, name="graph")
 console = Console()
 
 PORTFOLIO_ROOT = os.getenv(
@@ -116,12 +118,160 @@ def init(
 
 
 @app.command()
+def schedule(
+    hour: int = typer.Option(8, "--hour", "-h", help="Hour to run daily (24h, local time)"),
+    uninstall: bool = typer.Option(False, "--uninstall", help="Remove the scheduled job"),
+):
+    """Install (or remove) a daily launchd job that runs the CoS heartbeat automatically."""
+    import subprocess
+    import textwrap
+
+    label = "com.anywhere-stack.heartbeat"
+    plist_path = Path.home() / "Library" / "LaunchAgents" / f"{label}.plist"
+    project_root = Path(__file__).parent.parent.resolve()
+    uv_bin = "/Users/vguruvugari/.local/bin/uv"
+    log_dir = project_root / "logs"
+    log_dir.mkdir(exist_ok=True)
+
+    if uninstall:
+        try:
+            subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+        except Exception:
+            pass
+        if plist_path.exists():
+            plist_path.unlink()
+        console.print(f"[yellow]✓ Removed scheduled heartbeat[/yellow] ({plist_path})")
+        return
+
+    plist = textwrap.dedent(f"""\
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>Label</key>
+            <string>{label}</string>
+            <key>ProgramArguments</key>
+            <array>
+                <string>{uv_bin}</string>
+                <string>--directory</string>
+                <string>{project_root}</string>
+                <string>run</string>
+                <string>anywhere</string>
+                <string>heartbeat</string>
+            </array>
+            <key>WorkingDirectory</key>
+            <string>{project_root}</string>
+            <key>StartCalendarInterval</key>
+            <dict>
+                <key>Hour</key>
+                <integer>{hour}</integer>
+                <key>Minute</key>
+                <integer>0</integer>
+            </dict>
+            <key>StandardOutPath</key>
+            <string>{log_dir}/heartbeat.log</string>
+            <key>StandardErrorPath</key>
+            <string>{log_dir}/heartbeat.err</string>
+            <key>EnvironmentVariables</key>
+            <dict>
+                <key>HOME</key>
+                <string>{Path.home()}</string>
+                <key>PATH</key>
+                <string>/usr/local/bin:/usr/bin:/bin:/Users/vguruvugari/.local/bin</string>
+            </dict>
+        </dict>
+        </plist>
+    """)
+
+    plist_path.write_text(plist)
+
+    # Unload existing job silently before reloading
+    subprocess.run(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
+    result = subprocess.run(["launchctl", "load", str(plist_path)], capture_output=True, text=True)
+
+    if result.returncode == 0:
+        console.print(f"[green]✓ Heartbeat scheduled daily at {hour:02d}:00[/green]")
+        console.print(f"  Plist:  {plist_path}")
+        console.print(f"  Logs:   {log_dir}/heartbeat.log")
+        console.print(f"  Remove: [dim]anywhere schedule --uninstall[/dim]")
+    else:
+        console.print(f"[red]✗ launchctl load failed:[/red] {result.stderr.strip()}")
+        console.print(f"  Plist written to {plist_path} — load manually if needed")
+
+
+@app.command()
+def regimes(
+    min_occurrences: int = typer.Option(2, "--min", "-m", help="Minimum occurrences to flag a failure pattern"),
+):
+    """Run the Regimes self-improvement loop — diagnose failure patterns and propose fixes."""
+    console.print("[bold yellow]Running Regimes self-improvement loop...[/bold yellow]")
+    from anywhere.regimes import run_regimes_loop
+    result = run_regimes_loop(PORTFOLIO_ROOT, min_occurrences=min_occurrences)
+    console.print(f"\n[dim]Patterns diagnosed: {result['patterns_found']}  "
+                  f"Proposals recorded: {len(result.get('proposals', []))}[/dim]")
+
+
+@app.command()
+def topology():
+    """Show the role coordination topology (typed graph edges)."""
+    from anywhere.relations import ROLE_RELATIONS
+    from anywhere.runtime import registered_behaviors
+    import anywhere.behaviors  # register handlers
+
+    console.print("\n[bold]Role Topology (typed graph edges):[/bold]")
+    for r in ROLE_RELATIONS:
+        console.print(f"  {r.source:8s} --({r.rel_type})--> {r.target:8s}  on: {r.on_event}")
+
+    console.print("\n[bold]Registered behaviors:[/bold]")
+    for event_type, fns in registered_behaviors().items():
+        console.print(f"  [cyan]{event_type}[/cyan] → {', '.join(fns)}")
+
+
+@app.command()
 def slack():
     """Start the Slack Socket Mode listener."""
     console.print("[bold]Starting Anywhere Stack Slack listener...[/bold]")
     console.print(f"Portfolio root: {PORTFOLIO_ROOT}")
     from anywhere.interfaces.slack import start_slack_listener
     start_slack_listener()
+
+
+@graph_app.command("status")
+def graph_status(
+    path: str = typer.Argument(".", help="Path to project repo"),
+):
+    """Show teamwork graph: open tasks, blockers, recent outcomes, disputed entities."""
+    from anywhere.state.canonical import read_teamwork_graph
+    content = read_teamwork_graph(path)
+    if not content:
+        console.print(f"[dim]No teamwork graph found at[/dim] {path}")
+        console.print("[dim]Add .teamwork_config.json and run a heartbeat to ingest signals.[/dim]")
+        raise typer.Exit(0)
+    console.print(content)
+
+
+@graph_app.command("dispute")
+def graph_dispute(
+    entity_id: str = typer.Argument(..., help="Entity ID to dispute (e.g. task#00000001)"),
+    reason: str = typer.Argument(..., help="Reason for disputing this entity"),
+    path: str = typer.Option(".", "--path", "-p", help="Path to project repo"),
+    who: str = typer.Option("human", "--by", help="Who is raising the dispute"),
+):
+    """Mark a teamwork entity as disputed.
+
+    The disputed flag appears in `graph status` output as ⚠ and feeds the
+    Regimes quality loop as a signal that extraction needs improvement.
+    Disputes are non-destructive — the original entity is never deleted.
+    """
+    from anywhere.state.canonical import dispute_entity
+    dispute_entity(path, entity_id, reason, disputed_by=who)
+    console.print(f"[yellow]⚠  Disputed:[/yellow] {entity_id}")
+    console.print(f"   Reason:  {reason}")
+    console.print(f"   By:      {who}")
+    console.print(
+        f"   [dim]Entity marked in runs/ — visible in next `anywhere graph status {path}`[/dim]"
+    )
 
 
 @app.command()
