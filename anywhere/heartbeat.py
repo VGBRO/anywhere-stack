@@ -14,6 +14,7 @@ from anywhere.state.canonical import (
     read_open_issues,
     read_recent_events,
     read_state,
+    read_teamwork_graph,
 )
 from anywhere.state.projection import generate_brief, generate_state, write_brief, write_state
 
@@ -68,6 +69,9 @@ def _load_project_context(repo_path: str) -> str:
     recent = read_recent_events(repo_path, n=10)
     if recent:
         parts.append(f"## Recent Events (last 10)\n{json.dumps(recent, indent=2)}")
+    teamwork = read_teamwork_graph(repo_path)
+    if teamwork:
+        parts.append(teamwork)
     return "\n\n---\n\n".join(parts) if parts else "(empty project — no state files found)"
 
 
