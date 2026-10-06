@@ -13,6 +13,7 @@ from anywhere.state.canonical import (
     read_decisions,
     read_open_issues,
     read_recent_events,
+    read_regime_proposals,
     read_state,
     read_teamwork_graph,
 )
@@ -72,6 +73,9 @@ def _load_project_context(repo_path: str) -> str:
     teamwork = read_teamwork_graph(repo_path)
     if teamwork:
         parts.append(teamwork)
+    proposals = read_regime_proposals(repo_path)
+    if proposals:
+        parts.append(proposals)
     return "\n\n---\n\n".join(parts) if parts else "(empty project — no state files found)"
 
 
@@ -226,7 +230,21 @@ Respond in JSON with this exact structure:
     write_brief(repo_path, brief_content)
     write_state(repo_path, state_content)
 
-    # 5. EXIT — print summary
+    # 5. REGIMES — diagnose teamwork extraction quality; surface proposals
+    if (Path(repo_path) / ".teamwork.sqlite").exists():
+        console.print("  [dim]Running Regimes quality loop...[/dim]")
+        try:
+            from anywhere.regimes import run_teamwork_regimes
+            regimes_result = run_teamwork_regimes(repo_path)
+            n_proposals = len(regimes_result.get("proposals", []))
+            if n_proposals:
+                result.observations.append(
+                    f"Regimes: {n_proposals} new proposal(s) — review regime.patch_proposed events"
+                )
+        except Exception:
+            pass  # Regimes failure never blocks heartbeat
+
+    # 6. EXIT — print summary
     health_color = {"green": "green", "yellow": "yellow", "red": "red"}.get(result.health, "white")
     console.print(f"  [{health_color}]● {result.health.upper()}[/{health_color}] {summary}")
     if result.escalations:

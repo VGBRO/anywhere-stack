@@ -158,6 +158,37 @@ def read_open_issues(repo_path: str) -> list[dict]:
     return issues
 
 
+def read_regime_proposals(repo_path: str, limit: int = 5) -> str:
+    """Return a markdown summary of the most recent open regime.patch_proposed events.
+
+    Included in heartbeat context so the LLM reasoning step sees pending proposals.
+    Returns empty string if none.
+    """
+    recent = read_recent_events(repo_path, n=200)
+    proposals = [
+        e for e in recent
+        if e.get("type") == "regime.patch_proposed" and e.get("status") == "proposed"
+    ][-limit:]
+
+    if not proposals:
+        return ""
+
+    lines = ["## Regime Proposals (pending review)"]
+    for p in proposals:
+        fix = p.get("fix", {})
+        lines.append(
+            f"- ({p.get('occurrences', '?')}×) `{p.get('pattern', '')[:60]}`"
+        )
+        lines.append(
+            f"  Fix [{fix.get('confidence', '?')}]: {fix.get('fix_description', '')[:80]}"
+        )
+        lines.append(
+            f"  Component: `{fix.get('affected_component', 'unknown')}`  "
+            f"Test: {fix.get('test_criterion', 'n/a')[:60]}"
+        )
+    return "\n".join(lines)
+
+
 def read_teamwork_graph(repo_path: str) -> str:
     """Read the teamwork graph SQLite and return a markdown summary for LLM context.
 
