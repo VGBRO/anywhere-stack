@@ -2,16 +2,24 @@
 
 ## Why Nemotron
 
-NVIDIA's Nemotron model family is the technical foundation for Anywhere Stack's reasoning capabilities. The choice is not accidental.
+NVIDIA's Nemotron model family is the technical foundation for Anywhere Stack's reasoning capabilities. The choice is strategic, not incidental.
 
-**Why NVIDIA Nemotron specifically:**
-1. **Scale range.** One family covers 30B to 550B parameters. The same API, the same provider, radically different cost/quality tradeoffs. This is rare — most providers either give you small models or large ones, not a coherent family spanning both.
+**The real reason: Salesforce KOA.**
 
-2. **Reasoning quality at the top.** The 550B Ultra model is among the strongest available for complex multi-step reasoning. The Chief of Staff role — synthesizing a portfolio of projects, understanding relationships between intents, making non-obvious connections — requires this level of capability.
+Salesforce is building **KOA** — a family of enterprise AI models built on the Nemotron architecture. KOA is Salesforce's bet on what enterprise-grade reasoning models look like at different capability tiers.
 
-3. **Hackathon alignment.** The NVIDIA × Nebius hackathon specifically provides access to these models through the Nebius Token Factory. Using the native infrastructure (not OpenAI, not Anthropic) is both faster and more appropriate for the submission context.
+Anywhere Stack was built on Nemotron because it is the same architectural foundation as KOA. The five-tier routing strategy in this codebase — NANO for classification, ULTRA for deep reasoning, SUPER for planning, HERMES for tool use, LIGHTNING for high-frequency ops — is a direct preview of how KOA-tiered inference would work in a production personal AI stack.
 
-4. **Speed at the bottom.** The 30B Nano model handles intent routing in ~100ms. This is fast enough that the user does not perceive latency between typing and the first stage completing.
+This is not a hackathon convenience. It is deliberate alignment: **this prototype shows what a KOA-native personal agent looks like before KOA ships.**
+
+**Additional reasons Nemotron is the right choice:**
+1. **Scale range.** One family covers 30B to 550B parameters — same API, same provider, radically different cost/quality tradeoffs. Most providers give you small models or large ones, not a coherent family spanning both.
+
+2. **Reasoning quality at the top.** The 550B Ultra model is among the strongest available for complex multi-step reasoning. The Chief of Staff role requires this level — synthesizing a portfolio of projects, understanding relationships between intents, making non-obvious connections.
+
+3. **Speed at the bottom.** The 30B Nano model handles intent routing in ~100ms. The user perceives no latency between typing and the first stage completing.
+
+4. **Hackathon infrastructure.** The NVIDIA × Nebius hackathon provides native access through the Nebius Token Factory — same models, no additional setup.
 
 ---
 
