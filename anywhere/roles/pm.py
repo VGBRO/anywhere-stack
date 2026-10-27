@@ -118,7 +118,24 @@ Respond in JSON:
         if issue.get("id"):
             task["issue_id"] = issue["id"]
             task["issue_title"] = issue.get("title", "")
-        builder_result = execute_task(repo_path, task)
+        try:
+            builder_result = execute_task(repo_path, task)
+        except Exception as e:
+            # Failure is a first-class event — propagated up as a pm_error, not swallowed
+            append_event(repo_path, {
+                "type": "task_failure",
+                "source": "pm_triage",
+                "task": task,
+                "reason": str(e),
+            })
+            builder_result = {
+                "confidence": "low",
+                "output": f"Builder error: {e}",
+                "evidence": [],
+                "state_delta": "failed",
+                "unresolved": [str(e)],
+                "failure": str(e),
+            }
         result["builder_result"] = builder_result
         if builder_result.get("confidence") in ("high", "medium") and issue.get("id"):
             close_issue(repo_path, issue["id"], builder_result.get("output", "Completed by Builder."))

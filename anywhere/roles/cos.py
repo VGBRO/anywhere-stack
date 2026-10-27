@@ -1,13 +1,35 @@
-"""Chief of Staff role — portfolio-level attention routing across all projects."""
+"""Chief of Staff role — portfolio-level attention routing across all projects.
+
+Coordination model (Yohei/ActiveGraph):
+  CoS reasons about the portfolio, then EMITS events rather than calling roles directly.
+  The runtime.run_until_idle() loop fires the PM behavior reactively.
+  No component instructs another; coordination happens through the shared event queue.
+"""
 
 import json
 from pathlib import Path
 from rich.console import Console
 from anywhere.client import reason, route, Model
-from anywhere.roles.pm import run_pm_triage
 from anywhere.state.canonical import append_event, parse_json, read_state, read_brief
+from anywhere.tools.github import list_my_repos, list_issues as github_list_issues
 
 console = Console()
+
+
+def _load_github_signals() -> str:
+    """Pull open issues from all GitHub repos owned by the configured user."""
+    try:
+        raw = list_my_repos()
+        repos = json.loads(raw) if raw.startswith("[") else []
+        lines = []
+        for repo in repos:
+            if repo.get("open_issues", 0) > 0:
+                issues_raw = github_list_issues(repo["name"])
+                lines.append(f"### GitHub: {repo['full_name']} ({repo['open_issues']} open issues)")
+                lines.append(issues_raw)
+        return "\n\n".join(lines) if lines else ""
+    except Exception as e:
+        return f"(GitHub unavailable: {e})"
 
 
 def _load_portfolio(portfolio_root: str) -> dict[str, str]:
@@ -40,6 +62,12 @@ def run_cos_heartbeat(portfolio_root: str) -> dict:
         f"## Project: {name}\n{content}" for name, content in portfolio.items()
     )
 
+    # Append GitHub signals if available
+    console.print("  [dim]Fetching GitHub signals...[/dim]")
+    github_signals = _load_github_signals()
+    if github_signals and not github_signals.startswith("(GitHub"):
+        portfolio_text += f"\n\n---\n\n## GitHub Open Issues\n{github_signals}"
+
     skill_path = Path(__file__).parent.parent.parent / "skills" / "cos-skill.md"
     role_skill = skill_path.read_text() if skill_path.exists() else ""
 
@@ -65,16 +93,37 @@ Respond in JSON:
     if not result:
         result = {"attention_required": [], "escalations": [(raw or "")[:300]], "portfolio_health": "yellow", "summary": "CoS heartbeat completed (parse error)."}
 
+    # Reactive dispatch — emit events; behaviors fire through the runtime
+    import anywhere.behaviors  # register @on handlers
+    from anywhere.runtime import run_until_idle
+
     dispatched = []
     for item in result.get("attention_required", []):
         if item.get("action") == "dispatch_pm" and item.get("urgency") in ("high", "medium"):
             project_path = str(Path(portfolio_root) / item["project"])
             if Path(project_path).exists():
-                console.print(f"  [blue]→ Dispatching PM:[/blue] {item['project']} ({item['reason']})")
-                pm_result = run_pm_triage(project_path)
+                console.print(f"  [blue]→ Dispatching PM (reactive):[/blue] {item['project']} ({item['reason']})")
+                pm_events = run_until_idle(
+                    initial_events=[{
+                        "type": "project.needs_triage",
+                        "project": item["project"],
+                        "project_path": project_path,
+                        "reason": item.get("reason", ""),
+                        "urgency": item.get("urgency", "medium"),
+                    }],
+                    context={"portfolio_root": portfolio_root, "repo_path": project_path},
+                )
                 dispatched.append(item["project"])
-                if pm_result.get("builder_dispatched"):
-                    console.print(f"    [cyan]→ Builder dispatched for:[/cyan] {pm_result.get('priority_issue', {}).get('title', 'task')}")
+                completed = [e for e in pm_events if e.get("type") == "task.completed"]
+                low_conf = [e for e in pm_events if e.get("type") == "task.low_confidence"]
+                failures = [e for e in pm_events if e.get("type") in ("task.failed", "behavior.failed")]
+                if completed:
+                    conf = completed[0].get("confidence", "?")
+                    console.print(f"    [cyan]→ Task completed ({conf} confidence)[/cyan]")
+                elif low_conf:
+                    console.print(f"    [yellow]→ Task completed with low confidence[/yellow]")
+                elif failures:
+                    console.print(f"    [red]→ Failure recorded: {failures[0].get('error', '')[:80]}[/red]")
 
     health = result.get("portfolio_health", "green")
     summary = result.get("summary", "Heartbeat complete.")
@@ -94,5 +143,16 @@ Respond in JSON:
         "escalations": escalations,
         "summary": summary,
     })
+
+    # Proactive Slack post — system pushes results without waiting to be asked
+    from anywhere.notify import post_to_slack
+    health_emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}.get(health, "⚪")
+    lines = [f"{health_emoji} *Heartbeat complete* — {summary}"]
+    if dispatched:
+        lines.append(f"Dispatched PM: {', '.join(dispatched)}")
+    if escalations:
+        lines.append("*⚠ Needs your attention:*")
+        lines.extend(f"• {e}" for e in escalations)
+    post_to_slack("\n".join(lines))
 
     return {"escalations": escalations, "dispatched": dispatched, "summary": summary, "health": health}

@@ -1,5 +1,8 @@
+# Environment
 .env
 *.env
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -7,5 +10,62 @@ __pycache__/
 venv/
 dist/
 *.egg-info/
-.DS_Store
+*.sqlite
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs and run artifacts
+logs/
+out/
+projects/runs/
+projects/*/runs/
+projects/*/reports/
 *.log
+
+# Build/export artifacts
+*.pdf
+*.pptx
+*.pptx
+
+# Generated decks and prototypes (keep only the canonical one)
+anywhere_stack_3d.html
+anywhere_stack_deck.html
+anywhere_stack_deck_v2.html
+anywhere_stack_hero.pptx
+anywhere_stack_interactive.html
+anywhere_stack_onepager.html
+anywhere_stack_overlay.html
+anywhere_stack_slides.html
+anywhere_app_prototype.html
+varun_anywhere_stack_v1.html
+varun_anywhere_stack_v2.html
+varun_anywhere_stack_v3.html
+varun_anywhere_stack_v4.html
+anywhere_stack_script.json
+arch_*.html
+arch_s4_v2.pptx
+cs_leadership_deck.html
+demo_slide.html
+hackathon_deck.html
+hackathon_deck_v2.html
+hackathon_deck_v2_print.html
+slide5_flywheel.html
+teamwork_graph_ontology.html
+project_intelligence_*.html
+anywhere-stack-explainer.html
+build_arch_s4_v2_pptx.py
+export_deck_editable.py
+export_deck_pptx.py
+export_hero_slide.py
+
+# Media
+anywhere_stack_video/
+_slide_screenshots/
+
+# Experiments
+experiments/
+
+# macOS
+.DS_Store

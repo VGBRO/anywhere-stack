@@ -12,6 +12,7 @@ from anywhere.roles.cos import run_cos_heartbeat
 from anywhere.heartbeat import run_project_heartbeat
 from anywhere.state.canonical import append_event
 from anywhere.audio import is_audio_file, transcribe_audio
+from anywhere.skills.runner import run_skill, list_skills
 
 load_dotenv()
 
@@ -25,11 +26,15 @@ app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 
 
 def _classify_message(text: str) -> dict:
-    """Classify an incoming message as directive, question, approval, status, or heartbeat."""
+    """Classify an incoming message as directive, question, approval, status, heartbeat, or skill."""
+    skills = ", ".join(list_skills())
     system = (
         "Classify this message from the human operator of an agentic system. "
-        "Use type 'heartbeat' if the message is asking to run a heartbeat, health check, or portfolio check. "
-        "Respond in JSON: {\"type\": \"heartbeat|directive|question|approval|status|unknown\", \"project\": \"project name or null\", \"summary\": \"one line summary\"}"
+        "Use type 'heartbeat' if asking to run a heartbeat, health check, or portfolio check. "
+        f"Use type 'skill' if asking to run a named workflow skill. Available skills: {skills}. "
+        "For skill type, set skill_name to the matching skill name. "
+        "Respond in JSON: {\"type\": \"heartbeat|skill|directive|question|approval|status|unknown\", "
+        "\"skill_name\": \"skill name or null\", \"project\": \"project name or null\", \"summary\": \"one line summary\"}"
     )
     raw = route(text, system=system, model=Model.LIGHTNING)
     from anywhere.state.canonical import parse_json
@@ -85,7 +90,15 @@ def handle_mention(event, say):
     msg_type = classified.get("type", "unknown")
     project = classified.get("project")
 
-    if msg_type == "directive":
+    if msg_type == "skill":
+        skill_name = classified.get("skill_name")
+        if skill_name:
+            say(f"_Running *{skill_name}* skill..._")
+            repo_path = str(Path(PORTFOLIO_ROOT) / project) if project and Path(PORTFOLIO_ROOT, project).exists() else PORTFOLIO_ROOT
+            response = run_skill(skill_name, text, repo_path=repo_path)
+        else:
+            response = f"Skill not identified. Available skills: {', '.join(list_skills())}"
+    elif msg_type == "directive":
         response = _handle_directive(text, project)
     elif msg_type == "status":
         response = _handle_status(project)
@@ -178,7 +191,15 @@ def handle_audio_note(event, say, client):
     msg_type = classified.get("type", "unknown")
     project = classified.get("project")
 
-    if msg_type == "heartbeat":
+    if msg_type == "skill":
+        skill_name = classified.get("skill_name")
+        if skill_name:
+            say(channel=channel, text=f"_Running *{skill_name}* skill..._")
+            repo_path = str(Path(PORTFOLIO_ROOT) / project) if project and Path(PORTFOLIO_ROOT, project).exists() else PORTFOLIO_ROOT
+            response = run_skill(skill_name, transcript, repo_path=repo_path)
+        else:
+            response = f"Skill not identified. Available: {', '.join(list_skills())}"
+    elif msg_type == "heartbeat":
         say(channel=channel, text="Running CoS heartbeat across portfolio...")
         result = run_cos_heartbeat(PORTFOLIO_ROOT)
         health = result.get("health", "green")
