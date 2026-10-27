@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -26,17 +27,31 @@ app.add_middleware(
 
 # ── Serve the prototype UI ────────────────────────────────────────────────────
 
-PROTOTYPE = Path(__file__).parent.parent / "public" / "index.html"
-DOWNLOADS_PROTOTYPE = Path.home() / "Downloads" / "anywhere_stack_v5.html"
+PUBLIC = Path(__file__).parent.parent / "public"
+PROTOTYPE = PUBLIC / "index.html"
+
+
+def _parse_json(raw: str) -> dict:
+    """Robustly extract JSON from a model response that may include markdown fences."""
+    raw = raw.strip()
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+    return {}
+
+
+if PUBLIC.exists():
+    app.mount("/static", StaticFiles(directory=str(PUBLIC)), name="static")
 
 
 @app.get("/")
 def serve_ui():
     if PROTOTYPE.exists():
         return FileResponse(PROTOTYPE)
-    if DOWNLOADS_PROTOTYPE.exists():
-        return FileResponse(DOWNLOADS_PROTOTYPE)
-    return {"status": "Anywhere Stack API running", "ui": "place index.html in public/"}
+    return {"status": "Anywhere Stack API running — place index.html in public/"}
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -140,7 +155,7 @@ Route this intent."""
 
     try:
         routing_raw = route(routing_prompt, system=ROUTER_SYSTEM, model=Model.NANO)
-        routing = json.loads(routing_raw.strip().strip("```json").strip("```").strip())
+        routing = _parse_json(routing_raw)
     except Exception as e:
         routing = {
             "project_id": "new",
@@ -168,7 +183,7 @@ Generate the Project Brain update."""
 
     try:
         cos_raw = reason(cos_prompt, system=COS_SYSTEM, model=Model.ULTRA)
-        cos_result = json.loads(cos_raw.strip().strip("```json").strip("```").strip())
+        cos_result = _parse_json(cos_raw)
     except Exception as e:
         cos_result = {
             "response": f"Got it. I'll work on {routing.get('project_name', 'this')} for you.",

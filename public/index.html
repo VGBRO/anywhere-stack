@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anywhere Stack — Your AI travels with you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#07080a;color:#f4f4f6;
+  font-family:'Inter',system-ui,sans-serif;
+  font-feature-settings:"calt","kern","liga","ss03";
+  font-size:14px;line-height:1.6;height:100vh;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+/* ─── Nav ─── */
+.nav{
+  height:56px;background:#07080a;border-bottom:1px solid #242728;
+  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;
+  position:relative;z-index:10;
+}
+.nav-logo{font-weight:600;font-size:15px;color:#f4f4f6;letter-spacing:-0.3px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.nav-tagline{font-size:12px;font-weight:400;color:#6a6b6c;letter-spacing:0.1px}
+.nav-tabs{display:flex;gap:4px;margin:0 auto}
+.nav-tab{
+  background:transparent;border:none;color:#9c9c9d;
+  font:inherit;font-size:13px;font-weight:500;letter-spacing:0.2px;
+  padding:4px 12px;border-radius:9999px;cursor:pointer;transition:all 0.15s;
+}
+.nav-tab.active,.nav-tab:hover{background:#101111;color:#fff}
+.nav-right{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#59d499;flex-shrink:0;transition:background 0.3s}
+.conn-dot.offline{background:#ff6161}
+.conn-label{font-size:12px;color:#9c9c9d;letter-spacing:0.1px}
+.btn-toggle{
+  background:#fff;color:#000;border:none;font:inherit;
+  font-size:13px;font-weight:500;padding:5px 14px;
+  border-radius:8px;cursor:pointer;letter-spacing:0.2px;transition:background 0.15s;
+}
+.btn-toggle:hover{background:#e8e8e8}
+/* ─── Offline Banner ─── */
+.offline-banner{
+  background:#07080a;border-bottom:1.5px solid #2e6b5e;
+  color:#59d499;text-align:center;font-size:13px;font-weight:500;
+  padding:9px 20px;letter-spacing:0.03em;flex-shrink:0;
+  max-height:0;overflow:hidden;transition:max-height 0.3s ease,padding 0.3s;
+}
+.offline-banner.show{max-height:44px;padding:9px 20px}
+/* ─── Layout ─── */
+.app{display:flex;flex:1;overflow:hidden}
+/* ─── Sidebar ─── */
+.sidebar{
+  width:272px;flex-shrink:0;background:#0d0d0d;
+  border-right:1px solid #242728;display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-search{padding:12px 12px 8px}
+.search-wrap{position:relative}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6a6b6c;font-size:14px;pointer-events:none}
+.sidebar-search input{
+  width:100%;background:#101111;border:1px solid #242728;
+  color:#f4f4f6;font:inherit;font-size:13px;padding:7px 10px 7px 30px;
+  border-radius:8px;outline:none;
+}
+.sidebar-search input:focus{border-color:rgba(255,255,255,0.16)}
+.sidebar-search input::placeholder{color:#6a6b6c}
+.proj-list{flex:1;overflow-y:auto;padding:4px 8px 8px}
+.proj-list::-webkit-scrollbar{width:4px}
+.proj-list::-webkit-scrollbar-track{background:transparent}
+.proj-list::-webkit-scrollbar-thumb{background:#242728;border-radius:2px}
+.proj-row{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:8px;cursor:pointer;border:1px solid transparent;
+  transition:background 0.12s,border-color 0.12s;margin-bottom:2px;
+}
+.proj-row:hover{background:#101111}
+.proj-row.selected{background:#121212;border-color:#242728}
+.proj-icon{
+  width:36px;height:36px;border-radius:8px;background:#121212;
+  border:1px solid #242728;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.proj-info{flex:1;min-width:0}
+.proj-name{font-size:13px;font-weight:500;color:#f4f4f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-meta{font-size:11px;color:#6a6b6c;margin-top:1px}
+.badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;
+  letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;
+}
+.badge-firm{background:rgba(87,193,255,0.12);color:#57c1ff;cursor:default}
+.badge-firm[title]{cursor:help}
+.badge-sync{background:rgba(255,197,51,0.12);color:#ffc533}
+.spin{display:inline-block;animation:spin 1s linear infinite;font-style:normal}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ─── Main ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#07080a}
+/* ─── Intent Zone ─── */
+.intent-zone{
+  flex-shrink:0;background:#0d0d0d;border-bottom:1px solid #242728;padding:16px;
+}
+.zone-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.zone-label{font-size:11px;font-weight:400;color:#9c9c9d;letter-spacing:0.4px;text-transform:uppercase}
+.keycap{
+  background:linear-gradient(180deg,#121212,#0d0d0d);color:#9c9c9d;
+  border:1px solid #242728;border-radius:4px;padding:1px 6px;
+  font-size:11px;font-family:inherit;
+}
+textarea{
+  width:100%;background:#101111;border:1px solid #242728;color:#f4f4f6;
+  font:inherit;font-size:14px;padding:10px 12px;border-radius:8px;
+  resize:none;outline:none;min-height:62px;line-height:1.5;
+}
+textarea:focus{border-color:rgba(255,255,255,0.16)}
+textarea::placeholder{color:#6a6b6c}
+.examples{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.example{
+  background:transparent;border:1px solid #242728;color:#9c9c9d;
+  font:inherit;font-size:12px;padding:4px 10px;border-radius:9999px;
+  cursor:pointer;transition:all 0.12s;
+}
+.example:hover{background:#101111;color:#f4f4f6;border-color:rgba(255,255,255,0.16)}
+.btn-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.btn-primary{
+  background:#fff;color:#000;border:none;font:inherit;
+  font-size:13px;font-weight:500;padding:7px 18px;border-radius:8px;
+  cursor:pointer;letter-spacing:0.2px;transition:background 0.12s;
+}
+.btn-primary:hover{background:#e8e8e8}
+.btn-ghost{
+  background:transparent;border:1px solid #242728;color:#9c9c9d;
+  font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.12s;
+}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.16);color:#f4f4f6}
+/* ─── Response ─── */
+.response-area{padding:12px 16px 0;display:none}
+.response-box{
+  background:#101111;border:1px solid #242728;border-radius:8px;padding:12px 14px;
+}
+.response-box.bira{border-left:2px solid #2e6b5e}
+.resp-header{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.resp-dot{width:6px;height:6px;border-radius:50%;background:#59d499}
+.resp-label{font-size:11px;font-weight:500;color:#59d499;letter-spacing:0.3px}
+.resp-text{font-size:13px;color:#cdcdcd;line-height:1.6}
+/* ─── Sync flow ─── */
+.sync-flow{padding:12px 16px;display:none}
+.sync-stage{
+  font-size:12px;color:#59d499;padding:6px 10px;border-radius:6px;
+  background:#101111;border:1px solid #242728;margin-bottom:4px;
+  opacity:0;animation:fadeStage .3s ease forwards;
+}
+@keyframes fadeStage{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* ─── Brain Zone ─── */
+.brain-zone{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:16px}
+.brain-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.brain-title{font-size:14px;font-weight:600;color:#f4f4f6;letter-spacing:-0.2px}
+.brain-proj{font-size:12px;color:#6a6b6c;margin-left:8px}
+.brain-tabs{display:flex;gap:4px;margin-bottom:12px;background:#0d0d0d;border:1px solid #242728;border-radius:10px;padding:4px}
+.brain-tab{
+  flex:1;background:transparent;border:none;color:#9c9c9d;
+  font:inherit;font-size:12px;font-weight:500;padding:6px 8px;
+  border-radius:7px;cursor:pointer;transition:all 0.12s;text-align:center;letter-spacing:0.1px;
+}
+.brain-tab.active{background:#101111;color:#f4f4f6}
+.brain-content{
+  flex:1;background:#101111;border:1px solid #242728;border-radius:10px;
+  padding:14px;overflow-y:auto;
+}
+.brain-content::-webkit-scrollbar{width:4px}
+.brain-content::-webkit-scrollbar-thumb{background:#242728;border-radius:2px}
+.brain-section-label{font-size:11px;font-weight:500;color:#9c9c9d;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:8px}
+.brain-text{font-size:13px;color:#cdcdcd;line-height:1.7}
+.action-item{
+  display:flex;align-items:flex-start;gap:8px;padding:6px 0;
+  border-bottom:1px solid #242728;
+}
+.action-item:last-child{border-bottom:none}
+.action-dot{width:6px;height:6px;border-radius:50%;background:#57c1ff;flex-shrink:0;margin-top:5px}
+.history-item{padding:6px 0;border-bottom:1px solid #242728;font-size:12px}
+.history-item:last-child{border-bottom:none}
+.history-time{color:#6a6b6c;margin-bottom:2px;font-size:11px}
+/* ─── Queue ─── */
+.queue-bar{
+  background:#0d0d0d;border-top:1px solid #242728;padding:8px 16px;
+  display:none;flex-shrink:0;
+}
+.queue-inner{display:flex;align-items:center;justify-content:space-between}
+.queue-label{font-size:12px;color:#ffc533;display:flex;align-items:center;gap:6px}
+.queue-count{
+  background:rgba(255,197,51,0.15);color:#ffc533;
+  border-radius:4px;padding:1px 7px;font-size:11px;font-weight:500;
+}
+/* ─── Hero Splash ─── */
+.hero-splash{
+  position:fixed;inset:0;background:#07080a;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;text-align:center;cursor:pointer;
+}
+.hero-overline{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#6a6b6c;margin-bottom:20px}
+.hero-title{font-size:clamp(32px,5vw,52px);font-weight:600;color:#f4f4f6;letter-spacing:-1.5px;line-height:1.1;max-width:700px;margin-bottom:16px}
+.hero-title span{color:#57c1ff}
+.hero-body{font-size:clamp(15px,2vw,18px);color:#9c9c9d;line-height:1.6;max-width:560px;margin-bottom:40px}
+.hero-body strong{color:#cdcdcd;font-weight:500}
+.hero-cta{background:#fff;color:#000;border:none;font:inherit;font-size:14px;font-weight:500;padding:10px 24px;border-radius:8px;cursor:pointer;letter-spacing:0.2px}
+.hero-cta:hover{background:#e8e8e8}
+.hero-hint{margin-top:12px;font-size:11px;color:#434345}
+/* ─── Footer ─── */
+.footer{
+  padding:8px 20px;border-top:1px solid #242728;
+  font-size:11px;color:#434345;text-align:center;letter-spacing:0.2px;flex-shrink:0;
+}
+/* ─── Mobile ─── */
+@media(max-width:768px){
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid #242728;max-height:180px}
+  .app{flex-direction:column}
+  .nav-tabs{display:none}
+  .brain-tab{font-size:11px;padding:5px 4px}
+}
+</style>
+</head>
+<body>
+
+<!-- Hero Splash -->
+<div class="hero-splash" id="heroSplash" onclick="dismissHero()">
+  <div class="hero-overline">NVIDIA × Nebius Hackathon 2026</div>
+  <div class="hero-title">Your AI travels with you.<br><span>Including to work.</span></div>
+  <div class="hero-body">Introducing <strong>Anywhere Stack</strong> — a personal AI that persists across every context. Beneath the agent is <strong>FirmOS</strong>: an organizational mind that knows every project, every decision, and acts from wherever you are.</div>
+  <button class="hero-cta">Open Anywhere Stack</button>
+  <div class="hero-hint">Click anywhere to continue</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <span class="nav-logo">Anywhere Stack <span class="nav-tagline">Your AI travels with you — including to work</span></span>
+  <div class="nav-tabs">
+    <button class="nav-tab active">All</button>
+    <button class="nav-tab">Personal</button>
+    <button class="nav-tab">Firm OS</button>
+  </div>
+  <div class="nav-right">
+    <span class="conn-dot" id="connDot"></span>
+    <span class="conn-label" id="connLabel">Connected</span>
+    <button class="btn-toggle" id="toggleBtn" onclick="toggleOnline()">Go Offline</button>
+  </div>
+</nav>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner">◉ You're offline. Your projects aren't.</div>
+
+<!-- App -->
+<div class="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-search">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" placeholder="Search projects..." oninput="filterProjects(this.value)">
+      </div>
+    </div>
+    <div class="proj-list" id="projList"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Intent Zone -->
+    <div class="intent-zone">
+      <div class="zone-header">
+        <span class="zone-label">Intent Inbox</span>
+        <span class="keycap">⌘K</span>
+      </div>
+      <textarea id="prompt" rows="3" placeholder="What are you working on?"></textarea>
+      <div class="examples">
+        <button class="example" onclick="fillExample('Hey Stack, I\'m at the park. I want an ADU by next summer. Look into permits, costs, contractors, go ahead and plan it. I\'m going to enjoy time with my dog.')">ADU demo (flagship)</button>
+        <button class="example" onclick="fillExample('Update the India AI infrastructure project — Hyderabad site looks most promising based on TSIIC data.')">India infra update</button>
+        <button class="example" onclick="fillExample('Work on act 2 of the Telugu thriller — the protagonist discovers the AI conspiracy.')">Thriller act 2</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="askBtn" onclick="analyze()">Ask Stack</button>
+        <button class="btn-ghost" onclick="clearInput()">Clear</button>
+      </div>
+    </div>
+
+    <!-- Response -->
+    <div class="response-area" id="responseArea">
+      <div class="response-box" id="responseBox">
+        <div class="resp-header">
+          <span class="resp-dot"></span>
+          <span class="resp-label">STACK</span>
+        </div>
+        <div class="resp-text" id="respText"></div>
+      </div>
+    </div>
+
+    <!-- Sync Flow -->
+    <div class="sync-flow" id="syncFlow"></div>
+
+    <!-- Brain Zone -->
+    <div class="brain-zone">
+      <div class="brain-header">
+        <div style="display:flex;align-items:center">
+          <span class="brain-title">Project Brain</span>
+          <span class="brain-proj" id="brainProj"></span>
+        </div>
+        <div style="display:flex;gap:4px">
+          <span class="keycap">⌘1–5</span>
+        </div>
+      </div>
+      <div class="brain-tabs" id="brainTabs">
+        <button class="brain-tab active" onclick="setTab('intent')">Intent</button>
+        <button class="brain-tab" onclick="setTab('state')">State</button>
+        <button class="brain-tab" onclick="setTab('decisions')">Decisions</button>
+        <button class="brain-tab" onclick="setTab('actions')">Actions</button>
+        <button class="brain-tab" onclick="setTab('memory')">Memory</button>
+      </div>
+      <div class="brain-content" id="brainContent"></div>
+    </div>
+
+    <!-- Queue Bar -->
+    <div class="queue-bar" id="queueBar">
+      <div class="queue-inner">
+        <span class="queue-label">⏳ Intent Inbox <span class="queue-count" id="queueCount">0 pending</span></span>
+        <button class="btn-ghost" style="font-size:11px;padding:4px 10px" onclick="syncExecute()">Sync when online</button>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="footer">Anywhere Stack · Built for NVIDIA × Nebius Hackathon 2026</div>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+const PROJECTS = [
+  {
+    id:'infrastructure',name:'India AI Infrastructure',icon:'🏗️',scope:'personal',
+    tags:['india','infrastructure','hyderabad','tsiic','brownfield','power','data center','pilot'],
+    goal:'Explore a small AI inference infrastructure pilot in India.',
+    state:'Brownfield site evaluation in progress. Hyderabad leads on power access. Three candidate cities identified; no site selected yet.',
+    decision:'Evaluate brownfield power sites before greenfield. Start with 2MW capacity, expand on utilization. Avoid coastal sites.',
+    actions:['Complete power availability analysis for all 3 cities.','Request site visit quotes from 2 local real estate firms.','Map fiber connectivity options for each candidate site.'],
+    memory:'Key contacts: TSIIC (Telangana), MIDC (Maharashtra). Benchmark: 2MW Singapore facility ~$4.2M capex. Liquid-cooled preferred for density.',
+    history:[{at:'Oct 14',text:'Starter context: research power, cooling, network and site selection.'}]
+  },
+  {
+    id:'movie',name:'2030 Telugu Thriller',icon:'🎬',scope:'personal',
+    tags:['telugu','thriller','film','screenplay','act','script','movie','story','2030'],
+    goal:'Develop a compelling Telugu action thriller set in 2030.',
+    state:'Act 1 complete. Act 2 outline drafted. Protagonist motivation needs refinement.',
+    decision:'Set in Hyderabad 2030. AI surveillance state as backdrop. Hero is a whistleblower data scientist.',
+    actions:['Refine Act 2 conflict arc.','Write the confrontation scene at the data center.','Research Telugu film distribution channels.'],
+    memory:'Working title: "Signal." Core theme: personal privacy vs state security. Tone: Parasite-level tension.',
+    history:[{at:'Oct 10',text:'Initial concept: AI conspiracy thriller set in near-future Hyderabad.'}]
+  },
+  {
+    id:'vibe',name:'Vibe AI',icon:'💡',scope:'personal',
+    tags:['vibe','startup','developer','saas','product','launch','coding'],
+    goal:'Build and launch a developer-facing AI productivity product.',
+    state:'Product spec drafted. No code written yet. Positioning unclear vs existing tools.',
+    decision:'Focus on workflow automation for solo developers. Avoid competing with Cursor head-on.',
+    actions:['Define the one core use case Cursor doesn\'t solve.','Build a landing page.','Find 3 beta users.'],
+    memory:'Potential differentiator: ambient context capture during coding sessions. Similar to Copilot Workspace but lighter.',
+    history:[{at:'Oct 18',text:'Concept validation: solo dev productivity gap.'}]
+  },
+  {
+    id:'agentforce',name:'Agentforce Adoption',icon:'🤝',scope:'work',
+    tags:['agentforce','adoption','activation','salesforce','customer','pilot','cs'],
+    goal:'Improve enterprise Agentforce activation rates across the CS customer base.',
+    state:'Activation data pulled. Top friction points identified. Intervention framework not yet built.',
+    decision:'Focus on measurable activation outcomes, not feature education. Fix the onboarding gap before expanding scope.',
+    actions:['Build intervention playbook for top 3 friction points.','Identify 5 customers for pilot cohort.','Define activation metric.'],
+    memory:'Top friction: org setup complexity, lack of use-case fit, no internal champion. 97% of purchased credits unused in early cohort.',
+    history:[{at:'Oct 20',text:'Connect customer signals to interventions.'}]
+  },
+  {
+    id:'projectintel',name:'Project Intelligence',icon:'🧠',scope:'work',
+    tags:['intelligence','mcp','signals','insights','cs','headless','health'],
+    goal:'Surface CS signals and actions wherever employees and customers work.',
+    state:'CS MCP launching October. Salesforce Health Insights in GA prep. Headless capabilities in design.',
+    decision:'Prioritize MCP surface first — highest leverage for internal CS velocity.',
+    actions:['Define MCP tool schema for CS signals.','Review Health Insights GA readiness.','Draft headless capability spec.'],
+    memory:'CS Intelligence for Sales: attrition risk + adoption data in AE Home, Slackbot, Sales Agent. MCP = the intelligence surface owned by the Success team.',
+    history:[{at:'Oct 22',text:'MCP launch planning underway.'}]
+  }
+];
+
+// ─── State ────────────────────────────────────────────────────────────────
+let online = true;
+let selected = 'infrastructure';
+let activeTab = 'intent';
+let queue = [];
+let data = PROJECTS.map(p=>({...p,actions:[...p.actions],history:[...p.history]}));
+
+function getProj(id){ return data.find(p=>p.id===id) }
+
+// ─── Classify ─────────────────────────────────────────────────────────────
+function classify(text){
+  const t = text.toLowerCase();
+  if(/\badu\b|backyard|accessory dwelling/.test(t)) return null;
+  for(const p of data){
+    if(p.tags.some(tag=>t.includes(tag))) return p;
+    if(t.includes(p.name.toLowerCase())) return p;
+  }
+  return null;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function $(id){ return document.getElementById(id) }
+
+function renderProjects(filter=''){
+  const list = $('projList');
+  const f = filter.toLowerCase();
+  const visible = data.filter(p=> !f || p.name.toLowerCase().includes(f) || p.tags.some(t=>t.includes(f)));
+  list.innerHTML = visible.map(p=>`
+    <div class="proj-row ${p.id===selected?'selected':''}" onclick="selectProj('${p.id}')">
+      <div class="proj-icon">${p.icon}</div>
+      <div class="proj-info">
+        <div class="proj-name">${esc(p.name)}</div>
+        <div class="proj-meta">${p.tags.slice(0,2).join(' · ')}</div>
+      </div>
+      ${p.scope==='work'?'<span class="badge badge-firm" title="FirmOS — the organizational mind beneath the agent. Knows every project, every decision.">Firm OS</span>':''}
+      ${p.id.startsWith('local-')&&!online?'<span class="badge badge-sync"><span class="spin">↻</span></span>':''}
+    </div>
+  `).join('');
+}
+
+function renderBrain(){
+  const p = getProj(selected);
+  if(!p){ $('brainContent').innerHTML='<div class="brain-text" style="color:#6a6b6c">Select a project to view its brain.</div>'; return; }
+  $('brainProj').textContent = ' · '+p.name;
+  const tabs = $('brainTabs').querySelectorAll('.brain-tab');
+  tabs.forEach((t,i)=>{ const names=['intent','state','decisions','actions','memory']; t.classList.toggle('active',names[i]===activeTab); });
+  let html='';
+  if(activeTab==='intent'){
+    html=`<div class="brain-section-label">Goal</div><div class="brain-text">${esc(p.goal)}</div>`;
+  } else if(activeTab==='state'){
+    html=`<div class="brain-section-label">Current State</div><div class="brain-text">${esc(p.state)}</div>`;
+    if(p.history.length>1){
+      html+=`<div class="brain-section-label" style="margin-top:14px">History</div>`;
+      html+=p.history.slice().reverse().map(h=>`<div class="history-item"><div class="history-time">${esc(h.at)}</div><div class="brain-text">${esc(h.text)}</div></div>`).join('');
+    }
+  } else if(activeTab==='decisions'){
+    html=`<div class="brain-section-label">Direction</div><div class="brain-text">${esc(p.decision)}</div>`;
+  } else if(activeTab==='actions'){
+    html=`<div class="brain-section-label">Next Actions</div>`+p.actions.map(a=>`<div class="action-item"><span class="action-dot"></span><span class="brain-text">${esc(a)}</span></div>`).join('');
+  } else if(activeTab==='memory'){
+    html=`<div class="brain-section-label">Persistent Memory</div><div class="brain-text">${esc(p.memory)}</div>`;
+  }
+  $('brainContent').innerHTML = html;
+}
+
+function render(){
+  renderProjects();
+  renderBrain();
+  // offline UI
+  $('offlineBanner').classList.toggle('show',!online);
+  $('connDot').classList.toggle('offline',!online);
+  $('connLabel').textContent = online?'Connected':'Offline';
+  $('toggleBtn').textContent = online?'Go Offline':'Go Online';
+  $('askBtn').textContent = online?'Ask Stack':'Queue Intent';
+  const hasQueue = queue.length>0;
+  $('queueBar').style.display = (!online||hasQueue)?'block':'none';
+  $('queueCount').textContent = queue.length+' pending';
+}
+
+function selectProj(id){
+  selected=id;
+  activeTab='intent';
+  $('responseArea').style.display='none';
+  $('syncFlow').style.display='none';
+  render();
+}
+
+function setTab(tab){
+  activeTab=tab;
+  renderBrain();
+  $('brainTabs').querySelectorAll('.brain-tab').forEach((t,i)=>{
+    const names=['intent','state','decisions','actions','memory'];
+    t.classList.toggle('active',names[i]===tab);
+  });
+}
+
+function filterProjects(v){ renderProjects(v) }
+function fillExample(t){ $('prompt').value=t; $('prompt').focus() }
+function clearInput(){ $('prompt').value=''; $('responseArea').style.display='none'; $('syncFlow').style.display='none' }
+
+// ─── Show response ─────────────────────────────────────────────────────────
+function showResponse(html, bira=false){
+  $('responseArea').style.display='block';
+  $('responseBox').className='response-box'+(bira?' bira':'');
+  $('respText').innerHTML=html;
+  $('syncFlow').style.display='none';
+}
+
+// ─── API config ───────────────────────────────────────────────────────────────
+const API_BASE = '';
+let apiAvailable = false;
+
+async function checkApi(){
+  try{
+    const r = await fetch(API_BASE+'/health',{signal:AbortSignal.timeout(1500)});
+    if(r.ok){ apiAvailable=true; console.log('[Stack] Nemotron API connected ✓'); }
+  } catch(e){ apiAvailable=false; }
+}
+checkApi();
+
+// ─── Process intent (local fallback) ─────────────────────────────────────────
+function processLocal(q){
+  const p = getProj(q.id);
+  if(!p) return;
+  if(q.id.startsWith('local-')){
+    p.state='Initial plan in progress. Local requirements research queued. Site assessment pending.';
+    p.actions=['Verify parcel eligibility, setbacks, FAR limits with local planning authority.','Clarify intended ADU size, use, and total budget.','Request proposals from at least 3 licensed contractors.'];
+    p.history.push({at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),text:'Intent captured: '+q.text});
+  } else {
+    p.state = p.state+' [Updated via Stack]';
+    p.history.push({at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),text:q.text});
+  }
+  selected=q.id;
+  activeTab='actions';
+  render();
+}
+
+// ─── Process intent via Nemotron ──────────────────────────────────────────────
+async function processWithNemotron(text, projectId){
+  try{
+    const res = await fetch(API_BASE+'/api/intent',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text, projects:data.map(p=>({id:p.id,name:p.name,tags:p.tags,state:p.state,goal:p.goal}))})
+    });
+    if(!res.ok) return null;
+    const result = await res.json();
+    // Apply brain update to the project
+    const pid = result.is_new ? projectId : (result.project_id || projectId);
+    const p = getProj(pid);
+    if(p && result.brain){
+      if(result.brain.state) p.state = result.brain.state;
+      if(result.brain.goal) p.goal = result.brain.goal;
+      if(result.brain.decision) p.decision = result.brain.decision;
+      if(result.brain.actions?.length) p.actions = result.brain.actions;
+      if(result.brain.memory) p.memory = result.brain.memory;
+      p.history.push({at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),text:text});
+    }
+    selected = pid;
+    activeTab='actions';
+    render();
+    return result;
+  } catch(e){ return null; }
+}
+
+function process(q){ processLocal(q); }
+
+// ─── Analyze ──────────────────────────────────────────────────────────────
+function analyze(){
+  const text=$('prompt').value.trim();
+  if(!text) return;
+
+  const isAutoApprove=/go ahead|plan it|just do it|start now/i.test(text);
+  const isADU=/\badu\b|backyard|accessory dwelling/i.test(text);
+
+  if(isAutoApprove&&isADU){
+    // Create local project
+    const np={
+      id:'local-'+Date.now(),name:'Backyard ADU',icon:'🏡',scope:'personal',
+      tags:['adu','backyard','permits','construction','contractor'],
+      goal:'Plan and build an ADU (Accessory Dwelling Unit) in the backyard by next summer.',
+      state:'Intent captured. Research queued.',
+      decision:'',actions:[],memory:'',
+      history:[{at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),text:'Intent: '+text}]
+    };
+    data.push(np);
+    selected=np.id;
+    const q={id:np.id,text,newProject:true};
+    if(online){
+      showResponse('Of course. I\'ll start planning your Backyard ADU — researching local requirements, estimating costs, and identifying contractors.<br><br>Enjoy your time with Bira. 🐕',true);
+      if(apiAvailable){
+        processWithNemotron(text, np.id).then(r=>{
+          if(r?.response) showResponse(r.response+'<br><br>Enjoy your time with Bira. 🐕<br><small style="color:#434345">Powered by NVIDIA Nemotron · Nebius Token Factory</small>',true);
+        });
+      } else { process(q); }
+    } else {
+      queue.push(q);
+      showResponse('Of course. I\'ll start planning your Backyard ADU — researching local requirements, estimating costs, and identifying contractors.<br><br>Enjoy your time with Bira. 🐕 Your plan will be waiting when you reconnect.',true);
+    }
+    $('prompt').value='';
+    render();
+    return;
+  }
+
+  const p=classify(text);
+  if(!p){
+    showResponse('<b>New project detected.</b> Say "go ahead" to create it, or select an existing project first.');
+  } else {
+    selected=p.id;
+    const q={id:p.id,text,newProject:false};
+    if(online){
+      process(q);
+      showResponse(`<b>Matched: ${esc(p.name)}</b><br>I've updated the project state and added this to the history. Switch to the State or Actions tab to see what changed.`);
+    } else {
+      queue.push(q);
+      showResponse(`<b>Matched: ${esc(p.name)}</b><br>Queued for when you reconnect. ${queue.length} intent(s) pending.`);
+    }
+    $('prompt').value='';
+    render();
+  }
+}
+
+// ─── Sync ─────────────────────────────────────────────────────────────────
+function syncExecute(){
+  if(!online||!queue.length) return;
+  const count=queue.length;
+  const names=[...new Set(queue.map(q=>getProj(q.id)?.name||'New Project').filter(Boolean))];
+  const sf=$('syncFlow');
+  sf.style.display='block';
+  $('responseArea').style.display='none';
+  const provider = apiAvailable ? 'NVIDIA Nemotron · Nebius Token Factory' : 'local fallback';
+  const stages=[
+    {label:`✓ Local Intent Inbox read — ${count} request(s)`,delay:0},
+    {label:`✓ Project routing via Nemotron NANO — ${names.join(', ')}`,delay:350},
+    {label:`✓ Chief of Staff (Nemotron ULTRA) processing intents`,delay:750},
+    {label:`✓ Project Brains updated · ${provider}`,delay:1200}
+  ];
+  sf.innerHTML=stages.map(s=>`<div class="sync-stage" style="animation-delay:${s.delay}ms">${s.label}</div>`).join('');
+  if(apiAvailable){
+    fetch(API_BASE+'/api/sync',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        queue:queue.map(q=>({id:q.id,text:q.text,project_id:q.id})),
+        projects:data.map(p=>({id:p.id,name:p.name,tags:p.tags,state:p.state,goal:p.goal}))
+      })
+    }).then(r=>r.json()).then(result=>{
+      result.results?.forEach(r=>{
+        const p=getProj(r.project_id||r.id);
+        if(p&&r.brain){
+          if(r.brain.state) p.state=r.brain.state;
+          if(r.brain.actions?.length) p.actions=r.brain.actions;
+          if(r.brain.memory) p.memory=r.brain.memory;
+        }
+      });
+      queue=[];render();sf.style.display='none';
+    }).catch(()=>{
+      queue.forEach(q=>process(q));queue=[];render();sf.style.display='none';
+    });
+  } else {
+    setTimeout(()=>{
+      queue.forEach(q=>process(q));
+      queue=[];render();sf.style.display='none';
+    },1700);
+  }
+}
+
+// ─── Toggle online ────────────────────────────────────────────────────────
+function toggleOnline(){
+  online=!online;
+  if(online&&queue.length){ setTimeout(syncExecute,300) }
+  render();
+}
+
+// ─── Nav tab filter ───────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    const filter=this.textContent;
+    if(filter==='All'){ renderProjects() }
+    else if(filter==='Personal'){ renderProjectsScope('personal') }
+    else if(filter==='Firm OS'){ renderProjectsScope('work') }
+  });
+});
+
+function renderProjectsScope(scope){
+  const list=$('projList');
+  const visible=data.filter(p=>p.scope===scope);
+  list.innerHTML=visible.map(p=>`
+    <div class="proj-row ${p.id===selected?'selected':''}" onclick="selectProj('${p.id}')">
+      <div class="proj-icon">${p.icon}</div>
+      <div class="proj-info">
+        <div class="proj-name">${esc(p.name)}</div>
+        <div class="proj-meta">${p.tags.slice(0,2).join(' · ')}</div>
+      </div>
+      ${p.scope==='work'?'<span class="badge badge-firm" title="FirmOS — the organizational mind beneath the agent. Knows every project, every decision.">Firm OS</span>':''}
+    </div>
+  `).join('');
+}
+
+// ─── Keyboard shortcuts ───────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();$('prompt').focus()}
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ const ta=$('prompt'); if(document.activeElement===ta) analyze(); }
+  const tabs=['1','2','3','4','5'];
+  const tabNames=['intent','state','decisions','actions','memory'];
+  if((e.metaKey||e.ctrlKey)&&tabs.includes(e.key)){e.preventDefault();setTab(tabNames[parseInt(e.key)-1])}
+});
+
+// ─── Hero ─────────────────────────────────────────────────────────────────
+function dismissHero(){
+  const s=$('heroSplash');
+  s.style.transition='opacity 0.4s ease';
+  s.style.opacity='0';
+  setTimeout(()=>s.style.display='none',400);
+}
+document.addEventListener('keydown',e=>{ if($('heroSplash').style.display!=='none') dismissHero(); });
+
+// ─── Boot ─────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
