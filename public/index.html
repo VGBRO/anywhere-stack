@@ -708,12 +708,12 @@ const API_BASE = '';
 let isOnline=true, isFirmMode=false, offlineQueue=[], activeProject=null, recognition=null;
 
 const projects = [
-  { id:'adu', name:'Backyard ADU', scope:'personal', tags:['real-estate','construction'],
-    goal:'Build a 1,200 sq ft ADU to generate $2,800/month in rental income.',
-    state:'Permit submitted Sept 14. City review in progress. Three contractor quotes received.',
-    decision:'JADU classification — saves $12K and three months on timeline. Locked Sept 1.',
-    actions:['Call Building & Safety — permit status #2026-ADU-04421','Review Oakwood Construction invoice (due Oct 15)','Schedule structural inspection with Carlos Mendez'],
-    memory:'HOA approval not required — confirmed Aug 20. Contractor: Carlos Mendez, cmendez@oakwoodcon.com, 661-445-2200.' },
+  { id:'grid', name:'Agentforce Grid Pilot', scope:'work', tags:['agentforce','grid','cs'],
+    goal:'Deploy Grid in 10 customer orgs within 90 days to prove consumption lift.',
+    state:'Legal cleared. 4 grids validated in grid-org. Workshop vs 1:1 model decision pending.',
+    decision:'MeshMesh deployment: full copy sandbox + Data Mask. Agentforce Builder SKU provisions sandbox.',
+    actions:['Resolve workshop vs 1:1 model decision','Identify first 3 pilot customers','Prepare brief for Ivan and Katie'],
+    memory:'Legal cleared July 2026. 4 grids validated. Success stories needed before headcount ask. Consumption lift is the hypothesis.' },
   { id:'india', name:'India AI Infrastructure', scope:'work', tags:['policy','AI','research'],
     goal:'Publish analysis on India\'s position in the global AI infrastructure race.',
     state:'Outline complete. Reviewing NVIDIA × Reliance partnership. Need GPU allocation data.',
@@ -722,7 +722,7 @@ const projects = [
     memory:'Key thesis: India builds compute before governance — opposite of EU. 3-year window for US partnerships.' },
   { id:'anywhere', name:'Anywhere Stack', scope:'work', tags:['hackathon','AI','NVIDIA'],
     goal:'Ship a working prototype and Loom demo for NVIDIA × Nebius Hackathon by Oct 30.',
-    state:'FastAPI live. Nemotron pipeline working. Apple atmospheric glass UI shipped. Recording on Replit.',
+    state:'Ambient OS v2 building. Nemotron pipeline live. Demo recording tomorrow.',
     decision:'Lead with the Bira offline moment. KOA is the deeper story.',
     actions:['Record Loom demo (3 min max)','Make repo public before deadline','Rotate exposed Nebius key'],
     memory:'Built on Nemotron because Salesforce builds KOA on the same architecture. FirmOS = passport/visa trust.' },
@@ -791,18 +791,22 @@ function enterApp() {
 // ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects() {
   const el=document.getElementById('projects-list');
-  el.innerHTML='<div class="section-label">Active projects</div>';
-  projects.forEach((p,i)=>{
+  const visible=isFirmMode ? projects.filter(p=>p.scope==='work') : projects;
+  const label=isFirmMode ? 'Work projects' : 'Active projects';
+  el.innerHTML='<div class="section-label">'+label+'</div>';
+  visible.forEach((p)=>{
+    const i=projects.indexOf(p);
     const c=document.createElement('div');
-    c.className='p-card'; c.style.animationDelay=(i*0.07)+'s';
-    c.innerHTML=`
-      <div class="p-card-top">
-        <div class="p-card-name">${p.name}</div>
-        <div class="scope-badge ${p.scope}">${p.scope}</div>
-      </div>
-      <div class="p-card-state" id="cs-${p.id}">${p.state}</div>
-      <div class="p-card-tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-      <div class="p-card-flash" id="flash-${p.id}"></div>`;
+    c.className='p-card';
+    const top=document.createElement('div'); top.className='p-card-top';
+    const name=document.createElement('div'); name.className='p-card-name'; name.textContent=p.name;
+    const badge=document.createElement('div'); badge.className='scope-badge '+p.scope; badge.textContent=p.scope;
+    top.appendChild(name); top.appendChild(badge);
+    const state=document.createElement('div'); state.className='p-card-state'; state.id='cs-'+p.id; state.textContent=p.state;
+    const tags=document.createElement('div'); tags.className='p-card-tags';
+    p.tags.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s);});
+    const flash=document.createElement('div'); flash.className='p-card-flash'; flash.id='flash-'+p.id;
+    c.appendChild(top); c.appendChild(state); c.appendChild(tags); c.appendChild(flash);
     c.onclick=()=>openSheet(i);
     el.appendChild(c);
   });
@@ -970,7 +974,8 @@ function toggleFirmOS(){
   isFirmMode=!isFirmMode;
   document.body.classList.toggle('firm-mode',isFirmMode);
   document.getElementById('firm-btn').textContent=isFirmMode?'Personal':'Firm OS';
-  toast(isFirmMode?'Firm OS — professional workspace':'Personal context');
+  toast(isFirmMode?'Firm OS — work projects':'All projects');
+  renderProjects();
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
