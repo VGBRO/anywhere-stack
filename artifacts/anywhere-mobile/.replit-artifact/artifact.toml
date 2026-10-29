@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Anywhere Stack Mobile"
+description = "A mobile companion for Anywhere Stack, bringing intent capture and Project Brain context to iOS and Android with a calm, atmospheric glass interface."
+version = "1.0.0"
+id = "artifacts/anywhere-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 22528
+
+[services.development]
+run = "pnpm --filter @workspace/anywhere-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/anywhere-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/anywhere-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "22528"
+BASE_PATH = "/mobile/"

@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Anywhere Stack",
+    "slug": "anywhere-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "anywhere-mobile",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f5f5f7"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.anywherestack.mobile"
+    },
+    "android": {
+      "package": "com.anywherestack.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#f5f5f7"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": ["expo-router", "expo-font"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

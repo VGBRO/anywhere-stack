@@ -1,0 +1,213 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: intent
+    description: Intent routing and Project Brain updates
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /intent:
+    post:
+      operationId: processIntent
+      tags: [intent]
+      summary: Route an intent and update a Project Brain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntentRequest"
+      responses:
+        "200":
+          description: Intent processed by the configured AI provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntentResult"
+        "400":
+          description: Invalid intent
+        "502":
+          description: The AI provider failed or returned an invalid response
+        "503":
+          description: Live AI is not configured
+  /sync:
+    post:
+      operationId: syncQueue
+      tags: [intent]
+      summary: Process queued offline intents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        "200":
+          description: Queue processing results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        nebius_configured:
+          type: boolean
+        provider:
+          type: string
+        models:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - status
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+        goal:
+          type: string
+      required: [id, name]
+    Brain:
+      type: object
+      properties:
+        goal:
+          type: string
+        state:
+          type: string
+        decision:
+          type: string
+        actions:
+          type: array
+          items:
+            type: string
+        memory:
+          type: string
+    IntentRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+      required: [text]
+    IntentResult:
+      type: object
+      properties:
+        project_id:
+          type: string
+        project_name:
+          type: string
+        is_new:
+          type: boolean
+        action_type:
+          type: string
+        routing_confidence:
+          type: number
+        response:
+          type: string
+        brain:
+          $ref: "#/components/schemas/Brain"
+        models_used:
+          type: object
+          additionalProperties:
+            type: string
+      required: [project_id, project_name, response, brain]
+    QueueItem:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        project_id:
+          type: string
+      required: [id, text]
+    SyncRequest:
+      type: object
+      properties:
+        queue:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueueItem"
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+      required: [queue]
+    SyncItemResult:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        error:
+          type: string
+        text:
+          type: string
+        project_id:
+          type: string
+        project_name:
+          type: string
+        is_new:
+          type: boolean
+        action_type:
+          type: string
+        routing_confidence:
+          type: number
+        response:
+          type: string
+        brain:
+          $ref: "#/components/schemas/Brain"
+        models_used:
+          type: object
+          additionalProperties:
+            type: string
+      required: [id, status]
+    SyncResult:
+      type: object
+      properties:
+        synced:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncItemResult"
+      required: [synced, results]
+

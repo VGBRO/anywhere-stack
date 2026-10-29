@@ -92,7 +92,54 @@ cd anywhere-stack
 uv sync
 ```
 
+### Replit workspace
+
+The web app is at `artifacts/anywhere-web/index.html`; it preserves the original
+Apple-style UI and Canvas landscape with the scoped Firm OS/filter update.
+The Python package and FastAPI service live in `artifacts/api-server/anywhere/`.
+This is a pnpm multi-app workspace. The Expo mobile companion lives in
+`artifacts/anywhere-mobile/` and embeds the Liquid Glass interface from upstream
+commit `00ef0ce`, stored unchanged at
+`artifacts/anywhere-web/public/mobile-source.html`. The mobile snapshot is
+independent of the web home; `public/index.html` remains the upstream interface.
+Mobile Face/Voice sign-in and responses are demonstrations, not identity
+verification or live AI. The mobile wrapper needs the web service running.
+
+Click Run using these managed workflows:
+
+- `artifacts/anywhere-web: web` — Vite serves the existing vanilla HTML at `/`.
+- `artifacts/api-server: API Server` — Python 3.11 / FastAPI via
+  `uv run --frozen python main.py`, bound to `PORT`.
+- `artifacts/anywhere-mobile: expo` — Expo Go and browser mobile previews.
+  On Replit, the workflow supplies `EXPO_PUBLIC_DOMAIN` automatically.
+  Outside Replit, set it to the web service host (without `https://`) when
+  starting Expo; device previews require a host reachable from the phone.
+
+The shared proxy keeps `/api/*`, `/health`, `/static/*`, `/docs`, `/redoc`,
+and `/openapi.json` on the same origin as the web UI. No custom API host or
+Vite proxy is needed. For shell checks in Replit use `http://localhost:80/health`.
+
+Install workspace dependencies with `pnpm install --frozen-lockfile` and
+Python dependencies with `uv sync --frozen`. The post-merge script does both.
+No database is required; the scaffold's database packages are unused.
+FastAPI remains the source of the existing API schema at `/openapi.json`;
+the scaffold's generated TypeScript client is not used by the vanilla UI.
+
 ### Configure
+
+On Replit, keep `NEBIUS_API_KEY` in **Secrets** and restart the API workflow
+after changes. No `.env` file is required. Never put keys in browser code or Git.
+`/health` reports configuration presence only, not provider validity.
+Missing credentials return 503; provider or malformed AI responses return 502.
+Failed sync items retain their existing per-item error envelope, not fake success.
+
+**Existing security boundary:** The imported intent/sync API has no authentication,
+rate limits, or spending limits. The prototype's biometric screens are demonstrations,
+not API access control. Keep the workspace private and add real access control and
+abuse limits before making credential-backed inference available to untrusted users.
+This port does not add a login flow or change the original API access contract.
+
+For local development only:
 
 ```bash
 cp .env.example .env
@@ -103,20 +150,21 @@ cp .env.example .env
 
 ```bash
 bash scripts/serve.sh
-# → http://localhost:8747
+# → http://localhost:8080 (or PORT)
 ```
 
 ### Open the prototype UI
 
 ```bash
-open public/index.html
-# or open ~/Downloads/anywhere_stack_v5.html
+# Replit: open the Anywhere Stack web preview.
+# Local: the standalone FastAPI service also serves the same HTML at /
+open http://localhost:8080
 ```
 
 ### Verify Nemotron connection
 
 ```bash
-curl http://localhost:8747/health
+curl http://localhost:80/health
 ```
 
 Expected:
@@ -135,12 +183,20 @@ Expected:
 ### Test a live Nemotron intent
 
 ```bash
-curl -X POST http://localhost:8747/api/intent \
+curl -X POST http://localhost:80/api/intent \
   -H "Content-Type: application/json" \
   -d '{"text": "Plan an ADU in my backyard, go ahead", "projects": []}'
 ```
 
 ---
+
+The prototype still starts with the upstream sample projects. State and queued
+intents are held in browser memory, not durable storage; reloading loses them.
+Some voice interactions remain upstream local demonstrations, not live AI.
+Web home intent and sync requests use FastAPI. The preserved upstream web
+prototype falls back to local demo updates on provider failures and can clear
+unprocessed queued intents after a sync attempt. Neither UI should be treated
+as durable storage or production authentication.
 
 ## API Reference
 

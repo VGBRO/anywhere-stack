@@ -1,0 +1,19 @@
+{
+  "name": "weekly-review",
+  "description": "Sweep all projects and GitHub repos, summarise status, surface blockers, post weekly digest to Slack",
+  "model": "HERMES",
+  "tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "list_issues",
+    "create_issue",
+    "close_issue",
+    "slack_post",
+    "slack_search_channels",
+    "slack_search_messages",
+    "slack_read_channel",
+    "github_list_my_repos",
+    "github_list_issues"
+  ]
+}

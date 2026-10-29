@@ -1,14 +1,28 @@
-run = "python main.py"
-entrypoint = "main.py"
-modules = ["python-3.11"]
-
-[nix]
-channel = "stable-24_05"
+modules = ["nodejs-24", "python-3.11"]
 
 [deployment]
-run = ["python", "main.py"]
-deploymentTarget = "cloudrun"
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
+
+[nix]
+channel = "stable-25_05"
+packages = ["libyaml"]
 
 [[ports]]
-localPort = 8080
+localPort = 5000
 externalPort = 80
