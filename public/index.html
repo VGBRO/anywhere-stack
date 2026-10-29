@@ -113,6 +113,7 @@ html,body{height:100%;overflow:hidden;
   font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;
   color:rgba(255,255,255,.28);cursor:pointer;margin-top:4px}
 .arrival-listen-cancel:active{color:rgba(255,255,255,.55)}
+.arrival-hide{opacity:0;pointer-events:none;transition:opacity .22s cubic-bezier(0.23,1,0.32,1)}
 @keyframes authSuccess{
   0%{transform:scale(1.07)}60%{transform:scale(.97)}100%{transform:scale(1)}}
 .arrival-listen-orb.success{animation:authSuccess .5s cubic-bezier(0.23,1,0.32,1) forwards}
@@ -459,7 +460,7 @@ html,body{height:100%;overflow:hidden;
 
 <!-- ARRIVAL -->
 <div id="s-arrival" class="screen active">
-  <div class="arrival-symbol">
+  <div class="arrival-symbol" id="arrival-symbol">
     <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
       <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,255,255,0.60)" stroke-width="1"/>
       <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,255,255,0.38)" stroke-width="1"
@@ -469,8 +470,8 @@ html,body{height:100%;overflow:hidden;
       <circle cx="22" cy="22" r="2.5" fill="rgba(255,255,255,0.80)"/>
     </svg>
   </div>
-  <div class="arrival-name">Anywhere Stack</div>
-  <div class="arrival-tagline">Your intelligence, everywhere</div>
+  <div class="arrival-name" id="arrival-name">Anywhere Stack</div>
+  <div class="arrival-tagline" id="arrival-tagline">Your intelligence, everywhere</div>
   <div class="arrival-btns" id="arrival-btns">
     <button class="auth-btn" onclick="doAuth('face')">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -810,6 +811,10 @@ function doVoiceAuth(){
   secure.style.opacity='0';
   orb.classList.add('listening');
   status.textContent='Say anything to continue';
+  // Hide text elements so orb isn't overlaid on them
+  document.getElementById('arrival-symbol').classList.add('arrival-hide');
+  document.getElementById('arrival-name').classList.add('arrival-hide');
+  document.getElementById('arrival-tagline').classList.add('arrival-hide');
 
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){
@@ -864,7 +869,7 @@ function completeVoiceAuth(){
   var status=document.getElementById('auth-status');
   orb.classList.remove('listening');
   orb.classList.add('success');
-  status.textContent='Voice confirmed. Welcome.';
+  status.textContent='Voice confirmed. Welcome back, VG!';
   setTimeout(function(){
     buildHomeSections();
     showScreen('s-home');
@@ -889,6 +894,9 @@ function resetArrival(){
   secure.style.opacity='';
   orb.classList.remove('listening','success');
   status.textContent='Say anything to continue';
+  document.getElementById('arrival-symbol').classList.remove('arrival-hide');
+  document.getElementById('arrival-name').classList.remove('arrival-hide');
+  document.getElementById('arrival-tagline').classList.remove('arrival-hide');
 }
 function goHome(){
   stopListening();
