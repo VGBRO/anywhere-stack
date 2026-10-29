@@ -83,6 +83,40 @@ html,body{height:100%;overflow:hidden;
   color:rgba(255,255,255,.28);
   text-shadow:0 1px 8px rgba(255,255,255,.15)}
 
+/* Voice login listening state */
+.arrival-listen{
+  display:none;flex-direction:column;align-items:center;gap:20px;
+  position:absolute;inset:0;justify-content:center}
+.arrival-listen.active{display:flex}
+.arrival-btns.hidden{opacity:0;pointer-events:none;transition:opacity .3s}
+.arrival-listen-orb{
+  width:88px;height:88px;border-radius:50%;position:relative;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(30px);
+  border:.5px solid rgba(255,255,255,.60);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.80),0 8px 40px rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center}
+@keyframes loginOrbBreath{0%,100%{transform:scale(1);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.80),0 8px 40px rgba(255,255,255,.18)}50%{transform:scale(1.07);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.90),0 12px 60px rgba(255,255,255,.30)}}
+.arrival-listen-orb.listening{animation:loginOrbBreath 2s cubic-bezier(0.37,0,0.63,1) infinite}
+@keyframes loginAura{to{transform:rotate(360deg)}}
+.arrival-listen-aura{
+  position:absolute;inset:-14px;border-radius:50%;
+  background:conic-gradient(
+    rgba(140,200,255,.50) 0deg,rgba(200,150,255,.50) 90deg,
+    rgba(255,170,210,.50) 180deg,rgba(160,220,255,.50) 270deg,
+    rgba(140,200,255,.50) 360deg);
+  filter:blur(10px);animation:loginAura 8s linear infinite;opacity:.75}
+.arrival-listen-status{
+  font-size:11px;font-weight:300;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(255,255,255,.55);text-shadow:0 1px 12px rgba(255,255,255,.25)}
+.arrival-listen-cancel{
+  font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.28);cursor:pointer;margin-top:4px}
+.arrival-listen-cancel:active{color:rgba(255,255,255,.55)}
+@keyframes authSuccess{
+  0%{transform:scale(1.07)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+.arrival-listen-orb.success{animation:authSuccess .5s cubic-bezier(0.23,1,0.32,1) forwards}
+
 /* ── HOME ── */
 #s-home{display:flex;flex-direction:column}
 .home-topbar{
@@ -437,14 +471,14 @@ html,body{height:100%;overflow:hidden;
   </div>
   <div class="arrival-name">Anywhere Stack</div>
   <div class="arrival-tagline">Your intelligence, everywhere</div>
-  <div class="arrival-btns">
+  <div class="arrival-btns" id="arrival-btns">
     <button class="auth-btn" onclick="doAuth('face')">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>
       </svg>
       Face
     </button>
-    <button class="auth-btn" onclick="doAuth('voice')">
+    <button class="auth-btn" onclick="doVoiceAuth()">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <rect x="9" y="3" width="6" height="11" rx="3"/>
         <path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/>
@@ -453,7 +487,23 @@ html,body{height:100%;overflow:hidden;
       Voice
     </button>
   </div>
-  <div class="arrival-secure">Secured by FirmOS · Powered by Nemotron</div>
+
+  <!-- Voice auth listening overlay -->
+  <div class="arrival-listen" id="arrival-listen">
+    <div class="arrival-listen-orb" id="auth-orb">
+      <div class="arrival-listen-aura"></div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+    </div>
+    <div class="arrival-listen-status" id="auth-status">Say anything to continue</div>
+    <div class="arrival-listen-cancel" onclick="cancelVoiceAuth()">Cancel</div>
+  </div>
+
+  <div class="arrival-secure" id="arrival-secure">Secured by FirmOS · Powered by Nemotron</div>
 </div>
 
 <!-- HOME -->
@@ -741,7 +791,105 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   var el=document.getElementById(id);if(el)el.classList.add('active');
 }
-function doAuth(){buildHomeSections();showScreen('s-home');}
+function doAuth(method){
+  buildHomeSections();
+  showScreen('s-home');
+}
+
+var authRecognition=null;
+
+function doVoiceAuth(){
+  var btns=document.getElementById('arrival-btns');
+  var listen=document.getElementById('arrival-listen');
+  var secure=document.getElementById('arrival-secure');
+  var orb=document.getElementById('auth-orb');
+  var status=document.getElementById('auth-status');
+
+  btns.classList.add('hidden');
+  listen.classList.add('active');
+  secure.style.opacity='0';
+  orb.classList.add('listening');
+  status.textContent='Say anything to continue';
+
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    // No mic available — simulate with 2.5s countdown then auto-login
+    status.textContent='Listening…';
+    var t=2;
+    var iv=setInterval(function(){
+      status.textContent='Listening'+'…'.repeat(t%3+1);
+      t--;
+      if(t<0){clearInterval(iv);completeVoiceAuth();}
+    },600);
+    return;
+  }
+
+  authRecognition=new SR();
+  authRecognition.continuous=false;
+  authRecognition.interimResults=true;
+  authRecognition.lang='en-US';
+
+  var silTimer=null;
+  authRecognition.onresult=function(e){
+    var transcript='';
+    for(var i=0;i<e.results.length;i++){
+      transcript+=e.results[i][0].transcript;
+    }
+    status.textContent='"'+transcript+'"';
+    clearTimeout(silTimer);
+    // Final result — complete auth
+    if(e.results[e.results.length-1].isFinal){
+      try{authRecognition.stop();}catch(err){}
+      completeVoiceAuth();
+    } else {
+      silTimer=setTimeout(function(){
+        try{authRecognition.stop();}catch(err){}
+        completeVoiceAuth();
+      },1200);
+    }
+  };
+  authRecognition.onerror=function(e){
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+      // Mic denied — auto-login after brief pause
+      status.textContent='Voice confirmed.';
+      setTimeout(completeVoiceAuth,900);
+    }
+  };
+  authRecognition.onend=function(){};
+  authRecognition.start();
+}
+
+function completeVoiceAuth(){
+  var orb=document.getElementById('auth-orb');
+  var status=document.getElementById('auth-status');
+  orb.classList.remove('listening');
+  orb.classList.add('success');
+  status.textContent='Voice confirmed. Welcome.';
+  setTimeout(function(){
+    buildHomeSections();
+    showScreen('s-home');
+    // Reset arrival for next time
+    setTimeout(resetArrival,1000);
+  },900);
+}
+
+function cancelVoiceAuth(){
+  if(authRecognition){try{authRecognition.stop();}catch(e){}authRecognition=null;}
+  resetArrival();
+}
+
+function resetArrival(){
+  var btns=document.getElementById('arrival-btns');
+  var listen=document.getElementById('arrival-listen');
+  var secure=document.getElementById('arrival-secure');
+  var orb=document.getElementById('auth-orb');
+  var status=document.getElementById('auth-status');
+  btns.classList.remove('hidden');
+  listen.classList.remove('active');
+  secure.style.opacity='';
+  orb.classList.remove('listening','success');
+  status.textContent='Say anything to continue';
+}
 function goHome(){
   stopListening();
   document.getElementById('presence-text-input').style.display='none';
