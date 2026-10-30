@@ -1,7 +1,7 @@
 """Tool registry — OpenAI-format schemas + executor factory for execute_with_tools()."""
 
 from typing import Callable
-from anywhere.tools import files, projects, slack_tools, github
+from anywhere.tools import files, projects, slack_tools, github, search
 
 
 TOOL_SCHEMAS = [
@@ -188,6 +188,21 @@ TOOL_SCHEMAS = [
     {
         "type": "function",
         "function": {
+            "name": "web_search",
+            "description": "Search the web for real-time information using Tavily. Use for current facts, prices, regulations, news, or anything that needs up-to-date data beyond the model's training cutoff.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "max_results": {"type": "integer", "description": "Number of results to return (default: 5, max: 10)"},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "slack_search_channels",
             "description": "Find Slack channels whose name contains a keyword. Use to discover account-specific or topic-specific channels before reading them.",
             "parameters": {
@@ -235,6 +250,8 @@ def make_executor(repo_path: str) -> Callable[[str, dict], str]:
             return slack_tools.search_channels(args["query"], args.get("limit", 20))
         if name == "slack_search_messages":
             return slack_tools.search_messages(args["query"], args.get("channel"), args.get("limit", 20))
+        if name == "web_search":
+            return search.web_search(args["query"], args.get("max_results", 5))
         return f"Unknown tool: {name}"
 
     return executor

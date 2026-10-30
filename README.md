@@ -50,6 +50,7 @@ That is Anywhere Stack.
 | Nemotron Ultra 550B | Reads your Project Brain and writes the full response (~2s) |
 | Nemotron Super 120B | Plans tasks and manages project triage |
 | NVIDIA Parakeet (NeMo) | Streams speech to text; works offline on-device |
+| Tavily Search | Real-time web research — current prices, permits, regulations |
 
 All cloud inference runs on **Nebius Token Factory**.
 
@@ -140,6 +141,8 @@ NVIDIA × Nebius Global AI Hackathon 2026 — Personal AI track.
 **NVIDIA models:** Parakeet (NeMo), Nemotron Nano 30B, Nemotron Super 120B, Nemotron Ultra 550B.
 
 **Nebius:** All cloud inference and personal fine-tuning runs on Nebius Token Factory.
+
+**Tavily:** Real-time web search tool wired into the agent's tool-calling loop. When Nemotron knows your context but needs current facts — permit requirements, contractor rates, live regulations — it calls Tavily.
 
 ---
 
