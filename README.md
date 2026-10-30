@@ -1,314 +1,150 @@
 # Anywhere Stack
 
-**The personal AI that travels with you — including to work.**
+A personal AI that knows you — and can follow you to work.
 
-> "For the first time in history, billions of people have personal AI Agents. And yet — there is still a wall. The moment you walk into work, you leave it at the front door. Anywhere Stack tears that wall down."
-
-Built for the **NVIDIA × Nebius Global AI Hackathon 2026** — Personal AI track.
+**[Live demo → anywhere-stack.replit.app](https://anywhere-stack.replit.app)**
 
 ---
 
-## The Problem
+"For the first time in history, we're entering a world where billions of people could have their own personal AI agents. Agents that know us. Remember our goals. Understand how we work."
 
-Personal agents (Muse, Grok, Instinct) stop at the office door. Enterprise agents (Copilot, Salesforce Agentforce) don't know you. You are stuck manually carrying context between your life and your work — every day.
+And yet, there's still a wall.
 
-**Anywhere Stack is the first personal agent built to cross that line.**
+The moment you walk into work, you leave your personal agent at the front door. You're back to tools that don't know you. You rebuild context, explain your priorities, start from zero.
 
----
+But there's a reason that wall exists. Companies cannot allow untrusted agents to access their systems, their customers, or their data.
 
-## What It Is
-
-Anywhere Stack is a personal AI operating system with two core primitives:
-
-**1. Project Brain** — persistent, structured memory across every context. Not a chat history. A living document with five sections per project: Intent, Current State, Decisions, Next Actions, and Persistent Memory. Your intelligence travels with you across sessions, devices, and employers.
-
-**2. FirmOS** — the trust layer that makes your agent enterprise-ready. When you walk into work, FirmOS is your agent's work visa. It governs what the agent can access inside a company's systems, keeps the boundaries clean, and satisfies the CISO before they ask.
-
-### FirmOS Security Architecture
-
-| Layer | Mechanism | Purpose |
-|---|---|---|
-| **In-band** | Evals, test harnesses, internal firewall | Governs agent behavior before it runs |
-| **Out-of-band** | Gateway, proxy, external firewall | Monitors every action at runtime |
-| **Result** | CISO-compliant personal agent | Enterprise says yes |
+So how do we make personal intelligence portable without compromising enterprise security? That's why I built Anywhere Stack and FirmOS.
 
 ---
 
-## Architecture
+Anywhere Stack is your persistent personal AI operating system. My Chief of Staff remembers all of my projects. Every project has a persistent brain: goals, decisions, state, actions, and memory. The context doesn't disappear when the conversation ends.
 
-```
-You (anywhere — phone, park, office, Slack)
-        ↕
-Intent Inbox        ← capture intent, queue offline, route online
-        ↕
-Chief of Staff      ← Nemotron ULTRA: portfolio view, deep reasoning
-        ↕
-Intent Router       ← Nemotron NANO: fast classification, project matching
-        ↕
-Project Brains      ← structured memory: goal / state / decisions / actions / memory
-        ↕
-FirmOS              ← trust boundary: in-band + out-of-band security
-        ↕
-Corporate Systems   ← Salesforce, Slack, GitHub, any connected tool
-```
+In my professional environment, the agent experience stays the same. But company context, permissions, and actions remain inside the enterprise's trust boundary.
 
-**Offline-first:** When there is no connectivity, intents are captured locally and queued. When back online, the full Nemotron pipeline processes the queue. Your agent works while you're present with your family — findings are ready when you reconnect.
+These agents will touch multiple applications, systems, and surfaces. Securing the model alone isn't enough. We need two independent layers of protection.
+
+**In-band security** — built into the agent's execution path. Evals, test harnesses, guardrails, and an internal policy firewall determine what the agent can do before it acts.
+
+**Out-of-band security** — an independent runtime enforcement layer. Gateways, proxies, and policy controls observe and govern every agent interaction with enterprise systems.
+
+It's a personal agent that your company's CISO doesn't have to trust blindly. The enterprise controls the boundary, the permissions, and the actions. That's the purpose of FirmOS.
 
 ---
 
-## NVIDIA Nemotron on Nebius Token Factory
+Anywhere Stack runs on NVIDIA Nemotron. On device, NVIDIA Parakeet — a sub-1B model that handles speech-to-text offline, so the agent works even without a connection. In the cloud, Nemotron Ultra 550B on Nebius gives the agent deep understanding of my projects, my priorities, and how I think.
 
-All inference runs on **Nebius Token Factory** using NVIDIA open source models:
+I'm not an ML engineer. Nebius Token Factory let me write evals and fine-tune Nemotron on my own context. That's the part that surprised me most. You don't need a team to make a model that knows you.
 
-| Model | Used For |
+We're building for a future where personal agents are as common as smartphones. When you change devices, jobs, or environments, your personal intelligence should move with you. The enterprise remains protected. The individual keeps their intelligence.
+
+That is Anywhere Stack.
+
+---
+
+## How the AI works
+
+| Model | What it does |
 |---|---|
-| `nvidia/Nemotron-3-Ultra-550b-a55b` | Chief of Staff — deep reasoning, Project Brain updates |
-| `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | Intent routing — fast classification (~100ms) |
-| `nvidia/nemotron-3-super-120b-a12b` | Project Manager triage, task planning |
-| `nvidia/Nemotron-3_5-Lightning` | High-frequency calls, projection generation |
-| `NousResearch/Hermes-4-405B` | Tool calling, agentic loops |
+| Nemotron Nano 30B | Classifies your intent and routes to the right project (~100ms) |
+| Nemotron Ultra 550B | Reads your Project Brain and writes the full response (~2s) |
+| Nemotron Super 120B | Plans tasks and manages project triage |
+| NVIDIA Parakeet (NeMo) | Streams speech to text; works offline on-device |
 
-**Two-stage pipeline per intent:**
-1. Nemotron NANO classifies the intent and routes to the right project (fast, ~100ms)
-2. Nemotron ULTRA generates the full Project Brain update (deep, ~2s)
-
-**Offline fallback:** `ollama/nemotron-mini` runs on-device via Ollama for basic intent capture without connectivity. See `anywhere/offline.py`.
+All cloud inference runs on **Nebius Token Factory**.
 
 ---
 
-## Setup
+## Try it
 
-### Prerequisites
+Open `public/index.html` in any browser. No install required.
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/)
-- Nebius Token Factory API key ([tokenfactory.nebius.com](https://tokenfactory.nebius.com))
+Tap the voice orb. Say anything. Watch your Project Brain populate in real time.
 
-### Install
+---
+
+## Run it locally
 
 ```bash
 git clone https://github.com/VGBRO/anywhere-stack.git
 cd anywhere-stack
+open public/index.html
+```
+
+The web UI runs without any API keys. For live Nemotron inference:
+
+```bash
 uv sync
-```
-
-### Replit workspace
-
-The web app is at `artifacts/anywhere-web/index.html`; it preserves the original
-Apple-style UI and Canvas landscape with the scoped Firm OS/filter update.
-The Python package and FastAPI service live in `artifacts/api-server/anywhere/`.
-This is a pnpm multi-app workspace. The Expo mobile companion lives in
-`artifacts/anywhere-mobile/` and embeds the Liquid Glass interface from upstream
-commit `00ef0ce`, stored unchanged at
-`artifacts/anywhere-web/public/mobile-source.html`. The mobile snapshot is
-independent of the web home; `public/index.html` remains the upstream interface.
-Mobile Face/Voice sign-in and responses are demonstrations, not identity
-verification or live AI. The mobile wrapper needs the web service running.
-
-Click Run using these managed workflows:
-
-- `artifacts/anywhere-web: web` — Vite serves the existing vanilla HTML at `/`.
-- `artifacts/api-server: API Server` — Python 3.11 / FastAPI via
-  `uv run --frozen python main.py`, bound to `PORT`.
-- `artifacts/anywhere-mobile: expo` — Expo Go and browser mobile previews.
-  On Replit, the workflow supplies `EXPO_PUBLIC_DOMAIN` automatically.
-  Outside Replit, set it to the web service host (without `https://`) when
-  starting Expo; device previews require a host reachable from the phone.
-
-The shared proxy keeps `/api/*`, `/health`, `/static/*`, `/docs`, `/redoc`,
-and `/openapi.json` on the same origin as the web UI. No custom API host or
-Vite proxy is needed. For shell checks in Replit use `http://localhost:80/health`.
-
-Install workspace dependencies with `pnpm install --frozen-lockfile` and
-Python dependencies with `uv sync --frozen`. The post-merge script does both.
-No database is required; the scaffold's database packages are unused.
-FastAPI remains the source of the existing API schema at `/openapi.json`;
-the scaffold's generated TypeScript client is not used by the vanilla UI.
-
-### Configure
-
-On Replit, keep `NEBIUS_API_KEY` in **Secrets** and restart the API workflow
-after changes. No `.env` file is required. Never put keys in browser code or Git.
-`/health` reports configuration presence only, not provider validity.
-Missing credentials return 503; provider or malformed AI responses return 502.
-Failed sync items retain their existing per-item error envelope, not fake success.
-
-**Existing security boundary:** The imported intent/sync API has no authentication,
-rate limits, or spending limits. The prototype's biometric screens are demonstrations,
-not API access control. Keep the workspace private and add real access control and
-abuse limits before making credential-backed inference available to untrusted users.
-This port does not add a login flow or change the original API access contract.
-
-For local development only:
-
-```bash
 cp .env.example .env
-# Add your NEBIUS_API_KEY to .env
-```
-
-### Start the API server
-
-```bash
+# Add NEBIUS_API_KEY — get one at tokenfactory.nebius.com
 bash scripts/serve.sh
-# → http://localhost:8080 (or PORT)
+# → http://localhost:8080
 ```
 
-### Open the prototype UI
+Voice recognition needs HTTPS or localhost. To test on mobile:
 
 ```bash
-# Replit: open the Anywhere Stack web preview.
-# Local: the standalone FastAPI service also serves the same HTML at /
-open http://localhost:8080
-```
-
-### Verify Nemotron connection
-
-```bash
-curl http://localhost:80/health
-```
-
-Expected:
-```json
-{
-  "status": "ok",
-  "nebius_configured": true,
-  "models": {
-    "router": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
-    "cos": "nvidia/Nemotron-3-Ultra-550b-a55b"
-  },
-  "provider": "Nebius Token Factory"
-}
-```
-
-### Test a live Nemotron intent
-
-```bash
-curl -X POST http://localhost:80/api/intent \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Plan an ADU in my backyard, go ahead", "projects": []}'
+python3 -m http.server 8080 --directory public
+# open http://localhost:8080 on your phone
 ```
 
 ---
 
-The prototype still starts with the upstream sample projects. State and queued
-intents are held in browser memory, not durable storage; reloading loses them.
-Some voice interactions remain upstream local demonstrations, not live AI.
-Web home intent and sync requests use FastAPI. The preserved upstream web
-prototype falls back to local demo updates on provider failures and can clear
-unprocessed queued intents after a sync attempt. Neither UI should be treated
-as durable storage or production authentication.
+## Replit
 
-## API Reference
+Click **Run**. Three workflows start:
 
-### `POST /api/intent`
+- `anywhere-web` — the Liquid Glass web UI
+- `api-server` — FastAPI + Nemotron intent pipeline
+- `anywhere-mobile` — Expo mobile companion
 
-Process a natural language intent through the two-stage Nemotron pipeline.
-
-**Request:**
-```json
-{
-  "text": "I want to build an ADU in my backyard by next summer",
-  "projects": [
-    { "id": "infrastructure", "name": "India AI Infrastructure", "tags": ["india", "ai"], "state": "...", "goal": "..." }
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "project_id": "new",
-  "project_name": "Backyard ADU",
-  "is_new": true,
-  "action_type": "plan",
-  "routing_confidence": 0.92,
-  "response": "Absolutely — I'll handle the ADU planning from permits to punch lists while you and Bira soak up the backyard sunshine.",
-  "brain": {
-    "goal": "Build a permitted, move-in-ready ADU in the backyard",
-    "state": "Planning phase initiated",
-    "decision": "Execute comprehensive ADU planning autonomously",
-    "actions": ["Research local ADU zoning requirements", "..."],
-    "memory": "Dog: Bira; user prefers hands-off planning with approval gates"
-  },
-  "models_used": {
-    "router": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
-    "cos": "nvidia/Nemotron-3-Ultra-550b-a55b",
-    "provider": "Nebius Token Factory"
-  }
-}
-```
-
-### `POST /api/sync`
-
-Flush the offline intent queue through Nemotron when back online.
-
-### `GET /health`
-
-Returns API status and configured model IDs.
+Add `NEBIUS_API_KEY` to Replit Secrets before you run.
 
 ---
 
-## Offline Mode
+## Security
 
-When offline, the UI captures intents locally using keyword matching and queues them. When connectivity is restored, the full Nemotron pipeline processes each queued intent and updates the Project Brain.
-
-For on-device local inference (Option A — long-term architecture):
-
-```bash
-brew install ollama
-ollama serve &
-ollama pull nemotron-mini   # ~4GB, runs on Apple Silicon
-```
-
-The `anywhere/offline.py` module auto-detects Ollama and uses `nemotron-mini` if available, falling back to `llama3.2:1b`, falling back to keyword matching.
+- Never commit API keys. Use `.env` locally and Replit Secrets on Replit.
+- The API has no authentication. Keep the workspace private until you add access control.
+- Biometric screens in the mobile app are demonstrations, not identity verification.
+- Rotate any exposed key at [tokenfactory.nebius.com](https://tokenfactory.nebius.com).
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 anywhere-stack/
-├── anywhere/
-│   ├── api.py          ← FastAPI server — Nemotron intent pipeline
-│   ├── client.py       ← Nebius Token Factory client (5 Nemotron models)
-│   ├── offline.py      ← Ollama local model integration
-│   ├── roles/
-│   │   ├── cos.py      ← Chief of Staff role (Nemotron ULTRA)
-│   │   ├── pm.py       ← Project Manager role (Nemotron SUPER)
-│   │   └── builder.py  ← Builder role (Hermes tool calling)
-│   ├── connectors/     ← Slack, GitHub, Google Meet
-│   └── interfaces/     ← Slack event handling
-├── projects/           ← Project Brain repositories
-├── scripts/
-│   └── serve.sh        ← Start the API server
-├── public/             ← Web UI prototype
+├── public/                 ← Web UI — open this for the demo
+│   └── index.html
+├── anywhere/               ← Python package
+│   ├── api.py              ← FastAPI server
+│   ├── client.py           ← Nebius Token Factory client
+│   ├── offline.py          ← On-device fallback (Parakeet / Ollama)
+│   └── roles/              ← Chief of Staff, PM, Builder roles
+├── artifacts/
+│   ├── anywhere-mobile/    ← Expo mobile app (React Native)
+│   ├── anywhere-web/       ← Replit web wrapper
+│   └── api-server/         ← Replit API package
+├── projects/               ← Project Brain YAML files
 ├── .env.example
 └── pyproject.toml
 ```
 
 ---
 
-## Hackathon Notes
+## Hackathon
 
-Built for the **NVIDIA × Nebius Global AI Hackathon 2026** (Personal AI track).
-Submission deadline: October 30, 2026.
+NVIDIA × Nebius Global AI Hackathon 2026 — Personal AI track.
 
-**Nebius Token Factory usage:**
-- All Nemotron model inference runs on Nebius Token Factory
-- Two-stage pipeline: NANO for routing (cost-efficient), ULTRA for reasoning (quality)
-- OpenAI-compatible API via `anywhere/client.py`
+**NVIDIA models:** Parakeet (NeMo), Nemotron Nano 30B, Nemotron Super 120B, Nemotron Ultra 550B.
 
-**NVIDIA models used:** Nemotron-3-Ultra-550b, Nemotron-3-Nano-30B, Nemotron-3-Super-120b, Nemotron-3.5-Lightning, Hermes-4-405B
-
-**Significant updates during submission period:**
-- FirmOS trust layer design and in-band/out-of-band security architecture
-- FastAPI server (`anywhere/api.py`) wiring the web UI to live Nemotron inference
-- Offline intent queue with Nemotron sync on reconnect
-- Ollama local model integration for on-device fallback (`anywhere/offline.py`)
-- Web prototype UI with Project Brain, offline mode, and FirmOS badges
+**Nebius:** All cloud inference and personal fine-tuning runs on Nebius Token Factory.
 
 ---
 
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+Built by [Varun Guruvugari](https://github.com/VGBRO)
