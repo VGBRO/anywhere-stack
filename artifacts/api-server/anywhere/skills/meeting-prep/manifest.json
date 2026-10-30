@@ -1,0 +1,17 @@
+{
+  "name": "meeting-prep",
+  "description": "Prepare a briefing doc before a meeting — discovers relevant Slack channels, pulls GitHub issues, writes a 1-page brief",
+  "model": "HERMES",
+  "tools": [
+    "slack_search_channels",
+    "slack_search_messages",
+    "slack_read_channel",
+    "github_list_my_repos",
+    "github_list_issues",
+    "github_read_file",
+    "read_file",
+    "write_file",
+    "list_files",
+    "list_issues"
+  ]
+}

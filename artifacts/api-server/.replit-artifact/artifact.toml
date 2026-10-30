@@ -1,0 +1,28 @@
+kind = "api"
+previewPath = "/api"
+title = "Anywhere Stack API"
+version = "1.0.0"
+id = "3B4_FFSkEVBkAeYMFRJ2e"
+
+[[services]]
+localPort = 8080
+name = "API Server"
+paths = ["/api", "/health", "/docs", "/redoc", "/openapi.json", "/static"]
+
+[services.development]
+run = "pnpm --filter @workspace/api-server run dev"
+
+[services.env]
+PORT = "8080"
+
+[services.production.build]
+args = ["bash", "-c", "uv sync --frozen && pnpm --filter @workspace/api-server run build"]
+
+[services.production.run]
+args = ["uv", "run", "--frozen", "python", "artifacts/api-server/main.py"]
+
+[services.production.run.env]
+PORT = "8080"
+
+[services.production.health.startup]
+path = "/health"

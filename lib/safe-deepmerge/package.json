@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/safe-deepmerge",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.cjs",
+  "scripts": {
+    "test": "node --test test.cjs"
+  },
+  "dependencies": {
+    "@fastify/deepmerge": "^3.2.4"
+  }
+}

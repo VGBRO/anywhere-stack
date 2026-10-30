@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Anywhere Stack"
+description = "The existing Anywhere Stack website, with its upstream Apple-style interface and live FastAPI intent processing powered by Nemotron on Nebius."
+version = "1.0.0"
+id = "artifacts/anywhere-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22736
+
+[services.development]
+run = "pnpm --filter @workspace/anywhere-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/anywhere-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/anywhere-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22736"
+BASE_PATH = "/"
