@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#88aec5">
+<title>Anywhere Stack — See It In Action</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{
+  min-height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:linear-gradient(to bottom,
+    #7aa8c8 0%,
+    #9dbdd0 28%,
+    #8fafc4 41%,
+    #5880a0 43%,
+    #406278 68%,
+    #385878 100%);
+  background-attachment:fixed;
+  position:relative;
+  overflow-x:hidden;
+  padding-bottom:max(60px,env(safe-area-inset-bottom,60px))}
+
+/* Horizon glow */
+body::after{
+  content:'';
+  position:fixed;
+  top:calc(42% - 60px);
+  left:0;right:0;
+  height:120px;
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,0.07) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0}
+
+/* ── LAYOUT ── */
+.page{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding:max(60px,env(safe-area-inset-top,60px)) 24px 0;
+  gap:0}
+
+/* ── WORDMARK ── */
+.wordmark-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:56px}
+.atom{opacity:.90;margin-bottom:12px}
+.wordmark-name{
+  font-size:13px;font-weight:300;letter-spacing:7px;text-transform:uppercase;
+  color:rgba(255,255,255,.75);text-align:center;
+  text-shadow:0 1px 12px rgba(255,255,255,.20)}
+.wordmark-tag{
+  font-size:11px;font-weight:300;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.32);text-align:center}
+
+/* ── SECTION LABEL ── */
+.section-lbl{
+  font-size:10px;font-weight:300;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(255,255,255,.28);margin-bottom:20px;text-align:center}
+
+/* ── SCENARIO GRID ── */
+.scenario-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  width:100%;max-width:400px;margin-bottom:56px}
+
+.scenario-btn{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:22px 20px;border-radius:20px;cursor:pointer;
+  color:rgba(255,255,255,.85);
+  font-family:inherit;font-size:12px;font-weight:300;letter-spacing:2.5px;
+  text-transform:uppercase;text-align:center;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(40px) saturate(200%);
+  -webkit-backdrop-filter:blur(40px) saturate(200%);
+  border:.5px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.75),0 8px 32px rgba(0,0,0,.08);
+  transition:background .2s cubic-bezier(0.23,1,0.32,1),
+             transform .16s cubic-bezier(0.23,1,0.32,1),
+             box-shadow .2s;
+  outline:none}
+.scenario-btn:active{transform:scale(.94);background:rgba(255,255,255,.26)}
+@media(hover:hover) and (pointer:fine){
+  .scenario-btn:hover{background:rgba(255,255,255,.24);transform:scale(1.02);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.80),0 12px 40px rgba(0,0,0,.12)}}
+.scenario-btn.active{
+  background:rgba(255,255,255,.28);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.88),0 8px 40px rgba(120,180,255,.18)}
+.scenario-btn svg{opacity:.65}
+
+/* ── DEMO AREA ── */
+#demo-area{
+  display:none;flex-direction:column;align-items:center;
+  width:100%;max-width:400px;margin-bottom:56px}
+#demo-area.visible{display:flex}
+
+/* Orb */
+.orb-wrap{position:relative;display:flex;align-items:center;justify-content:center;
+  width:140px;height:140px;margin-bottom:20px}
+.orb-ring{position:absolute;border-radius:50%;border:.5px solid rgba(255,255,255,.35);
+  animation:orbRing 2.8s cubic-bezier(0.23,1,0.32,1) infinite;opacity:0;
+  animation-play-state:paused}
+@keyframes orbRing{
+  0%{width:96px;height:96px;opacity:.5}
+  100%{width:162px;height:162px;opacity:0}}
+.orb-ring:nth-child(2){animation-delay:.9s}
+.orb-ring:nth-child(3){animation-delay:1.8s}
+.orb-aura{
+  position:absolute;inset:-16px;border-radius:50%;
+  background:conic-gradient(
+    rgba(140,180,255,.35) 0deg,rgba(210,140,255,.28) 90deg,
+    rgba(255,160,195,.28) 180deg,rgba(160,215,255,.35) 270deg,
+    rgba(140,180,255,.35) 360deg);
+  filter:blur(18px);
+  animation:auraRotate 10s linear infinite;
+  opacity:.50;
+  animation-play-state:paused}
+@keyframes auraRotate{to{transform:rotate(360deg)}}
+.voice-orb{
+  width:96px;height:96px;border-radius:50%;
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(30px) saturate(200%);
+  -webkit-backdrop-filter:blur(30px) saturate(200%);
+  border:.5px solid rgba(255,255,255,.80);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.90),inset 0 -2px 6px rgba(0,0,0,.04),
+    0 8px 40px rgba(0,0,0,.08);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:2;
+  transition:transform .18s cubic-bezier(0.23,1,0.32,1)}
+@keyframes orbBreath{
+  0%,100%{transform:scale(1);box-shadow:inset 0 2px 0 rgba(255,255,255,.90),0 8px 40px rgba(0,0,0,.08)}
+  50%{transform:scale(1.06);box-shadow:inset 0 2px 0 rgba(255,255,255,.95),0 14px 60px rgba(120,160,255,.18)}}
+
+/* Orb states */
+#demo-area.state-responding .orb-ring,
+#demo-area.state-thinking .orb-ring{animation-play-state:running}
+#demo-area.state-responding .orb-aura,
+#demo-area.state-thinking .orb-aura{animation-play-state:running;opacity:.75}
+#demo-area.state-responding .orb-aura{animation-duration:3.5s;opacity:.90}
+#demo-area.state-responding .voice-orb{animation:orbBreath 2.2s cubic-bezier(0.37,0,0.63,1) infinite}
+
+.orb-icon{opacity:.40;transition:opacity .3s}
+#demo-area.state-responding .orb-icon{opacity:.18}
+
+/* Orb status */
+.orb-status{
+  font-size:11px;font-weight:300;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.32);text-align:center;min-height:18px;
+  transition:color .3s}
+#demo-area.state-responding .orb-status,
+#demo-area.state-thinking .orb-status{color:rgba(255,255,255,.55)}
+
+/* ── TRANSCRIPT ── */
+#transcript{
+  width:100%;display:flex;flex-direction:column;gap:14px;
+  margin-top:28px}
+
+.tline{
+  opacity:0;transform:translateY(6px);
+  transition:opacity .32s cubic-bezier(0.23,1,0.32,1),
+             transform .32s cubic-bezier(0.23,1,0.32,1)}
+.tline.vis{opacity:1;transform:none}
+
+.tline-user{
+  font-size:15px;font-weight:300;font-style:italic;
+  color:rgba(255,255,255,.38);line-height:1.6;text-align:left}
+.tline-stack{
+  font-size:17px;font-weight:300;letter-spacing:-.15px;
+  color:rgba(255,255,255,.82);line-height:1.7;text-align:left}
+
+/* Event pills */
+.tline-event{text-align:center}
+.event-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:999px;
+  background:rgba(255,255,255,.14);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:.5px solid rgba(255,255,255,.30);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.40);
+  font-size:10px;font-weight:300;letter-spacing:2.5px;
+  text-transform:uppercase;color:rgba(255,255,255,.60)}
+.event-pill .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dot-red{background:rgba(255,80,70,.80)}
+.dot-green{background:rgba(52,208,88,.80)}
+.event-pill.firmos{
+  background:rgba(175,140,60,.20);
+  border-color:rgba(220,180,90,.30);
+  color:rgba(230,195,120,.80);
+  box-shadow:inset 0 1px 0 rgba(255,220,120,.25)}
+
+/* Completion */
+#completion{
+  display:none;flex-direction:column;align-items:center;gap:14px;
+  margin-top:28px;width:100%}
+#completion.vis{display:flex}
+.brain-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 18px;border-radius:999px;
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:.5px solid rgba(255,255,255,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.50);
+  font-size:10px;font-weight:300;letter-spacing:2.5px;
+  text-transform:uppercase;color:rgba(255,255,255,.65)}
+.brain-dot{width:5px;height:5px;border-radius:50%;background:rgba(52,208,88,.80)}
+.replay-btn{
+  padding:10px 24px;border-radius:999px;cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:300;letter-spacing:2.5px;
+  text-transform:uppercase;color:rgba(255,255,255,.50);
+  background:transparent;border:.5px solid rgba(255,255,255,.25);
+  transition:color .2s,border-color .2s,background .2s}
+.replay-btn:active{color:rgba(255,255,255,.80);background:rgba(255,255,255,.10)}
+@media(hover:hover) and (pointer:fine){
+  .replay-btn:hover{color:rgba(255,255,255,.70);border-color:rgba(255,255,255,.40)}}
+
+/* ── FOOTER ── */
+.footer{
+  font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);text-align:center;
+  padding:0 24px max(40px,env(safe-area-inset-bottom,40px));
+  position:relative;z-index:1}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="wordmark-wrap">
+    <div class="atom">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,255,255,0.60)" stroke-width="1"/>
+        <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,255,255,0.38)" stroke-width="1" transform="rotate(60 22 22)"/>
+        <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,255,255,0.22)" stroke-width="1" transform="rotate(120 22 22)"/>
+        <circle cx="22" cy="22" r="2.5" fill="rgba(255,255,255,0.80)"/>
+      </svg>
+    </div>
+    <div class="wordmark-name">Anywhere Stack</div>
+    <div class="wordmark-tag">Your intelligence, everywhere</div>
+  </div>
+
+  <div class="section-lbl">See it in action</div>
+
+  <div class="scenario-grid">
+    <button class="scenario-btn" onclick="startScenario('offline')" id="btn-offline">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Offline Capture
+    </button>
+    <button class="scenario-btn" onclick="startScenario('work')" id="btn-work">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      Work Projects
+    </button>
+    <button class="scenario-btn" onclick="startScenario('research')" id="btn-research">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      Research
+    </button>
+    <button class="scenario-btn" onclick="startScenario('creative')" id="btn-creative">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+      Creative
+    </button>
+  </div>
+
+  <div id="demo-area">
+    <div class="orb-wrap">
+      <div class="orb-ring"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-ring"></div>
+      <div class="orb-aura"></div>
+      <div class="voice-orb">
+        <svg class="orb-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(60,60,80,0.65)" stroke-width="1.5" stroke-linecap="round">
+          <rect x="9" y="3" width="6" height="11" rx="3"/>
+          <path d="M5 11a7 7 0 0 0 14 0"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="8" y1="22" x2="16" y2="22"/>
+        </svg>
+      </div>
+    </div>
+    <div class="orb-status" id="orb-status"></div>
+    <div id="transcript"></div>
+    <div id="completion">
+      <div class="brain-pill">
+        <div class="brain-dot"></div>
+        Project Brain Updated
+      </div>
+      <button class="replay-btn" onclick="replayScenario()">Replay</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Secured by FirmOS · Powered by Nemotron</div>
+
+<script>
+var SCENARIOS = {
+  offline: [
+    {type:'event', html:'<div class="event-pill"><div class="dot dot-red"></div>Offline</div>', delay:0},
+    {type:'user',  text:'"I want to build a backyard unit for my parents in Austin — permits, costs, contractors."', delay:400},
+    {type:'think', delay:1800},
+    {type:'stack', text:'Starting Backyard ADU. Five workstreams captured: permits, budgeting, contractors, materials, design. Saved locally. Will research when you\'re back online.', delay:0},
+    {type:'pause', delay:2200},
+    {type:'event', html:'<div class="event-pill"><div class="dot dot-green"></div>Online</div>', delay:0},
+    {type:'think', delay:1200},
+    {type:'stack', text:'Synced. Austin permits run $3,200–$8,500. Three contractors found with ADU experience. Timeline: 8–14 weeks. Full report in your Project Brain.', delay:0},
+    {type:'done',  delay:1400}
+  ],
+  work: [
+    {type:'event', html:'<div class="event-pill firmos">Firm OS Boundary</div>', delay:0},
+    {type:'user',  text:'"Find the ten best Agentforce Grid pilot candidates — high SKU usage, low activation."', delay:400},
+    {type:'think', delay:2000},
+    {type:'stack', text:'Inside FirmOS. Found 14 candidates. Top 10 ranked by consumption upside. Brief ready — review before I send to Ivan and Katie?', delay:0},
+    {type:'pause', delay:1800},
+    {type:'user',  text:'"Review first."', delay:0},
+    {type:'think', delay:1600},
+    {type:'stack', text:'Saved to Agentforce Grid under Next Actions. Approval required before sending.', delay:0},
+    {type:'done',  delay:1200}
+  ],
+  research: [
+    {type:'user',  text:'"Pull the latest NVIDIA Reliance data and draft the intro for my India piece."', delay:0},
+    {type:'think', delay:1800},
+    {type:'stack', text:'Found three filings and two Reuters pieces from this week. $3B Blackwell deployment across Jio, clusters online Q2 2027. Drafting with the sovereign compute angle… Done. In your Project Brain.', delay:0},
+    {type:'done',  delay:1400}
+  ],
+  creative: [
+    {type:'user',  text:'"Start a new script — psychological thriller, whistleblower in the Hyderabad tech sector."', delay:0},
+    {type:'think', delay:2000},
+    {type:'stack', text:'New project: Telugu Thriller. Andhadhun × Drishyam tone. One question — morally grey from page 1, or does it emerge?', delay:0},
+    {type:'pause', delay:2000},
+    {type:'user',  text:'"Morally grey from page 1."', delay:0},
+    {type:'think', delay:1400},
+    {type:'stack', text:'Decision saved. Drafting the opening sequence now.', delay:0},
+    {type:'done',  delay:1000}
+  ]
+};
+
+var currentScenario = null;
+var playTimer = null;
+
+function startScenario(key) {
+  document.querySelectorAll('.scenario-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('btn-'+key).classList.add('active');
+  clearTimeout(playTimer);
+  currentScenario = key;
+  var area = document.getElementById('demo-area');
+  area.className = 'visible';
+  document.getElementById('transcript').innerHTML = '';
+  document.getElementById('completion').className = '';
+  document.getElementById('orb-status').textContent = '';
+  setTimeout(function(){area.scrollIntoView({behavior:'smooth',block:'start'});}, 80);
+  runSequence(SCENARIOS[key], 0);
+}
+
+function replayScenario() {
+  if(currentScenario) startScenario(currentScenario);
+}
+
+function runSequence(steps, idx) {
+  if(idx >= steps.length) return;
+  var step = steps[idx];
+  var delay = idx === 0 ? 300 : (step.delay || 0);
+  playTimer = setTimeout(function(){
+    executeStep(step, function(){runSequence(steps, idx+1);});
+  }, delay);
+}
+
+function executeStep(step, done) {
+  var area = document.getElementById('demo-area');
+  var statusEl = document.getElementById('orb-status');
+
+  if(step.type === 'think') {
+    area.className = 'visible state-thinking';
+    statusEl.textContent = 'Thinking…';
+    setTimeout(done, step.delay || 1600);
+
+  } else if(step.type === 'pause') {
+    area.className = 'visible';
+    statusEl.textContent = '';
+    setTimeout(done, step.delay || 1000);
+
+  } else if(step.type === 'event') {
+    area.className = 'visible';
+    statusEl.textContent = '';
+    var line = document.createElement('div');
+    line.className = 'tline tline-event';
+    line.innerHTML = step.html;
+    document.getElementById('transcript').appendChild(line);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){line.classList.add('vis');});});
+    setTimeout(done, 600);
+
+  } else if(step.type === 'user') {
+    area.className = 'visible';
+    statusEl.textContent = 'Listening…';
+    var line = document.createElement('div');
+    line.className = 'tline tline-user';
+    document.getElementById('transcript').appendChild(line);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){line.classList.add('vis');});});
+    typewriterWords(line, step.text, 85, function(){
+      statusEl.textContent = '';
+      done();
+    });
+
+  } else if(step.type === 'stack') {
+    area.className = 'visible state-responding';
+    statusEl.textContent = 'Responding…';
+    var line = document.createElement('div');
+    line.className = 'tline tline-stack';
+    document.getElementById('transcript').appendChild(line);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){line.classList.add('vis');});});
+    typewriterWords(line, step.text, 72, function(){
+      area.className = 'visible';
+      statusEl.textContent = '';
+      done();
+    });
+
+  } else if(step.type === 'done') {
+    area.className = 'visible';
+    statusEl.textContent = '';
+    setTimeout(function(){
+      var comp = document.getElementById('completion');
+      comp.className = 'vis';
+      comp.scrollIntoView({behavior:'smooth',block:'nearest'});
+      done();
+    }, step.delay || 1000);
+  }
+}
+
+function typewriterWords(el, text, msPerWord, done) {
+  var words = text.split(' ');
+  var i = 0;
+  el.textContent = '';
+  function next(){
+    if(i >= words.length){done();return;}
+    el.textContent += (i > 0 ? ' ' : '') + words[i];
+    i++;
+    setTimeout(next, msPerWord + (Math.random() * 20 - 10));
+  }
+  next();
+}
+</script>
+</body>
+</html>
