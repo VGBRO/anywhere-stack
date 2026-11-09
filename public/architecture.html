@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anywhere Stack — Architecture</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#0a0e2a;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+.slide{
+  width:1280px;height:720px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#0a0e2a 0%,#111830 40%,#1a2040 70%,#0d1535 100%);
+}
+
+/* Stars */
+.stars{position:absolute;inset:0;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:#fff}
+
+/* Tree silhouette */
+.tree-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0.55}
+
+/* Subtle ground glow */
+.ground-glow{
+  position:absolute;bottom:0;left:0;right:0;height:180px;
+  background:radial-gradient(ellipse at 30% 100%,rgba(40,180,140,0.08) 0%,transparent 70%);
+  pointer-events:none}
+
+/* Content layer */
+.content{position:absolute;inset:0;display:flex;flex-direction:column;padding:32px 40px 28px}
+
+/* Badge + headline */
+.badge{
+  display:inline-flex;align-items:center;
+  background:#7c3aed;border-radius:999px;
+  padding:5px 16px;
+  font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#fff;
+  margin-bottom:14px;width:fit-content}
+
+.headline{
+  font-size:50px;font-weight:800;letter-spacing:-1px;
+  color:#fff;line-height:1.08;
+  margin-bottom:28px;
+  text-shadow:0 2px 30px rgba(0,0,0,0.5)}
+
+/* Main row */
+.main-row{display:flex;gap:20px;flex:1;align-items:flex-start}
+
+/* LEFT COLUMN — agent stack */
+.agent-stack{display:flex;flex-direction:column;width:560px;flex-shrink:0;gap:0}
+
+.agent-row{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(20,30,70,0.85);
+  border:.5px solid rgba(100,160,255,0.18);
+  border-radius:12px;
+  padding:12px 18px;
+  backdrop-filter:blur(12px);
+  position:relative}
+
+.agent-icon{font-size:22px;width:32px;text-align:center;flex-shrink:0}
+
+.agent-info{flex:1}
+.agent-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#4fd1c5}
+.agent-model{font-size:15px;font-weight:500;color:#fff;margin-top:2px}
+
+.agent-signal{
+  font-size:11px;font-weight:400;letter-spacing:.5px;
+  color:rgba(100,220,200,0.65);text-align:right;flex-shrink:0}
+
+/* Connector between rows */
+.connector{
+  display:flex;flex-direction:column;align-items:center;
+  padding:4px 0;position:relative;margin-left:32px}
+.connector-line{
+  width:1.5px;height:18px;
+  background:repeating-linear-gradient(to bottom,rgba(100,200,180,0.5) 0px,rgba(100,200,180,0.5) 4px,transparent 4px,transparent 8px)}
+.connector-arrow{color:rgba(100,200,180,0.6);font-size:10px;margin-top:-2px}
+.connector-label{
+  font-size:10px;color:rgba(100,200,180,0.55);letter-spacing:.8px;
+  margin-top:2px;font-family:'SF Mono',monospace}
+
+/* Dashed connection lines from stack to world card */
+.reads-line{
+  position:absolute;right:-20px;top:50%;
+  width:20px;height:1px;
+  background:repeating-linear-gradient(to right,rgba(100,200,180,0.45) 0,rgba(100,200,180,0.45) 4px,transparent 4px,transparent 8px)}
+.reads-label{
+  position:absolute;right:-58px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:rgba(100,200,180,0.6);letter-spacing:.5px;font-family:'SF Mono',monospace}
+
+/* CENTER — THE WORLD card */
+.world-card{
+  flex:1;
+  background:rgba(15,22,55,0.88);
+  border:.5px solid rgba(100,160,255,0.22);
+  border-radius:16px;
+  padding:20px 20px 18px;
+  backdrop-filter:blur(16px);
+  display:flex;flex-direction:column;
+  max-width:260px}
+
+.world-title{
+  font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:#4fd1c5;text-align:center;margin-bottom:2px}
+.world-sub{
+  font-size:11px;font-weight:400;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(255,255,255,0.35);text-align:center;margin-bottom:16px}
+.world-divider{height:.5px;background:rgba(100,160,255,0.18);margin-bottom:14px}
+
+.file-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.file-row{display:flex;align-items:center;gap:8px}
+.file-icon{font-size:13px;opacity:0.6}
+.file-name{font-size:12px;font-family:'SF Mono',monospace;color:rgba(255,255,255,0.45);letter-spacing:.3px}
+
+.world-divider2{height:.5px;background:rgba(100,160,255,0.12);margin-bottom:14px}
+
+.access-list{display:flex;flex-direction:column;gap:8px}
+.access-row{display:flex;align-items:center;gap:10px}
+.access-icon{font-size:14px;width:20px}
+.access-agent{font-size:11px;color:rgba(255,255,255,0.6);width:52px;font-weight:500}
+.access-btn{
+  padding:3px 10px;border-radius:5px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.btn-reads{background:rgba(30,40,90,0.9);border:.5px solid rgba(100,160,255,0.3);color:rgba(180,200,255,0.8)}
+.btn-rw{background:#16a34a;border:none;color:#fff}
+
+/* RIGHT — iPhone mockup */
+.iphone{
+  width:160px;flex-shrink:0;
+  background:#1a1a2e;
+  border-radius:36px;
+  border:8px solid #1e1e3a;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 20px 60px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  overflow:hidden;
+  position:relative;
+  height:300px;
+  margin-top:8px}
+
+/* Notch */
+.iphone-notch{
+  width:60px;height:18px;
+  background:#1a1a2e;
+  border-radius:0 0 14px 14px;
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  z-index:10}
+
+.iphone-screen{
+  width:100%;height:100%;
+  background:linear-gradient(to bottom,#88aec5 0%,#9dbdd0 38%,#5880a0 42%,#406278 100%);
+  padding:26px 12px 12px;
+  display:flex;flex-direction:column}
+
+.ip-back{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:8px}
+.ip-project{font-size:15px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:2px}
+.ip-meta{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:10px}
+
+.ip-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.ip-tab{
+  padding:3px 8px;border-radius:999px;font-size:8px;font-weight:500;letter-spacing:.3px;
+  background:rgba(255,255,255,0.18);
+  border:.5px solid rgba(255,255,255,0.40);
+  color:rgba(255,255,255,0.65)}
+.ip-tab.active{
+  background:rgba(255,255,255,0.55);
+  color:rgba(0,0,0,0.78);
+  border-color:rgba(255,255,255,0.70)}
+
+.ip-panel{
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  border:.5px solid rgba(255,255,255,0.35);
+  border-radius:10px;
+  padding:9px 10px;
+  flex:1}
+.ip-section-lbl{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:rgba(0,0,0,0.38);margin-bottom:5px;font-weight:600}
+.ip-body{font-size:10px;font-weight:400;color:rgba(0,0,0,0.72);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- Stars -->
+  <div class="stars" id="stars"></div>
+
+  <!-- Tree silhouette SVG -->
+  <svg class="tree-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Left tree -->
+    <path d="M-10 720 L-10 200 Q20 180 0 160 Q40 140 10 110 Q60 80 20 50 Q80 10 40 0 Q100 20 80 60 Q130 30 100 70 Q150 50 120 90 Q170 70 130 110 Q180 100 140 140 Q190 130 145 170 Q195 165 148 200 L160 720Z" fill="#060d1a"/>
+    <!-- Right tree partial -->
+    <path d="M1180 720 L1180 280 Q1200 260 1185 240 Q1215 215 1190 190 Q1230 165 1200 140 Q1245 120 1205 95 Q1255 80 1215 115 Q1260 95 1225 130 Q1270 115 1230 155 Q1275 145 1232 180 Q1278 175 1233 210 L1260 720Z" fill="#060d1a"/>
+    <!-- Ground bushes -->
+    <ellipse cx="80" cy="720" rx="120" ry="30" fill="#060d1a"/>
+    <ellipse cx="1200" cy="720" rx="100" ry="25" fill="#060d1a"/>
+    <!-- Distant hills -->
+    <path d="M0 620 Q200 560 400 600 Q600 640 800 580 Q1000 520 1280 590 L1280 720 L0 720Z" fill="rgba(6,13,26,0.6)"/>
+  </svg>
+
+  <!-- Ground glow -->
+  <div class="ground-glow"></div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="badge">Why It Works</div>
+    <div class="headline">A context with Agents.<br>Not an Agent with context.</div>
+
+    <div class="main-row">
+
+      <!-- LEFT: Agent stack -->
+      <div class="agent-stack">
+
+        <!-- YOU -->
+        <div class="agent-row">
+          <div class="agent-icon">📱</div>
+          <div class="agent-info">
+            <div class="agent-label">You</div>
+            <div class="agent-model">Voice / Anywhere</div>
+          </div>
+          <div class="agent-signal">Signal/Intent</div>
+        </div>
+
+        <!-- Connector 1 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-arrow">▼</div>
+          <div class="connector-label">portfolio.heartbeat</div>
+        </div>
+
+        <!-- CHIEF OF STAFF -->
+        <div class="agent-row" style="position:relative">
+          <div class="agent-icon">🧠</div>
+          <div class="agent-info">
+            <div class="agent-label">Chief of Staff</div>
+            <div class="agent-model">Claude Opus</div>
+          </div>
+          <div class="agent-signal">reads</div>
+        </div>
+
+        <!-- Connector 2 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-arrow">▼</div>
+          <div class="connector-label">project.needs_triage</div>
+        </div>
+
+        <!-- PROJECT MANAGER -->
+        <div class="agent-row">
+          <div class="agent-icon">📋</div>
+          <div class="agent-info">
+            <div class="agent-label">Project Manager</div>
+            <div class="agent-model">Claude Sonnet</div>
+          </div>
+          <div class="agent-signal">reads</div>
+        </div>
+
+        <!-- Connector 3 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-arrow">▼</div>
+          <div class="connector-label">task.ready</div>
+        </div>
+
+        <!-- BUILDER -->
+        <div class="agent-row">
+          <div class="agent-icon">🔨</div>
+          <div class="agent-info">
+            <div class="agent-label">Builder</div>
+            <div class="agent-model">Claude Haiku</div>
+          </div>
+          <div class="agent-signal" style="color:rgba(100,220,100,0.75)">reads+write</div>
+        </div>
+
+        <!-- Connector 4 -->
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-arrow">▼</div>
+          <div class="connector-label">task.completed</div>
+        </div>
+
+        <!-- OUTPUT -->
+        <div class="agent-row">
+          <div class="agent-icon">💬</div>
+          <div class="agent-info">
+            <div class="agent-label">Output</div>
+            <div class="agent-model">Anywhere</div>
+          </div>
+          <div class="agent-signal">Summary sent</div>
+        </div>
+
+      </div><!-- /agent-stack -->
+
+      <!-- CENTER: The World card -->
+      <div class="world-card">
+        <div class="world-title">The World</div>
+        <div class="world-sub">Git Repos</div>
+        <div class="world-divider"></div>
+
+        <div class="file-list">
+          <div class="file-row"><span class="file-icon">📄</span><span class="file-name">state.md</span></div>
+          <div class="file-row"><span class="file-icon">📄</span><span class="file-name">decisions.md</span></div>
+          <div class="file-row"><span class="file-icon">📁</span><span class="file-name">issues/</span></div>
+          <div class="file-row"><span class="file-icon">📁</span><span class="file-name">runs/</span></div>
+          <div class="file-row"><span class="file-icon">📁</span><span class="file-name">memory/</span></div>
+        </div>
+
+        <div class="world-divider2"></div>
+
+        <div class="access-list">
+          <div class="access-row">
+            <span class="access-icon">🧠</span>
+            <span class="access-agent">CoS</span>
+            <span class="access-btn btn-reads">reads</span>
+          </div>
+          <div class="access-row">
+            <span class="access-icon">📋</span>
+            <span class="access-agent">PM</span>
+            <span class="access-btn btn-reads">reads</span>
+          </div>
+          <div class="access-row">
+            <span class="access-icon">🔨</span>
+            <span class="access-agent">Builder</span>
+            <span class="access-btn btn-rw">reads + writes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: iPhone mockup -->
+      <div class="iphone">
+        <div class="iphone-notch"></div>
+        <div class="iphone-screen">
+          <div class="ip-back">← Projects</div>
+          <div class="ip-project">India AI Infrastructure</div>
+          <div class="ip-meta">Work · Policy, AI</div>
+          <div class="ip-tabs">
+            <div class="ip-tab">State</div>
+            <div class="ip-tab active">Direction</div>
+            <div class="ip-tab">Actions</div>
+            <div class="ip-tab">Memory</div>
+          </div>
+          <div class="ip-panel">
+            <div class="ip-section-lbl">Direction &amp; Decisions</div>
+            <div class="ip-body">Lead with sovereign compute angle.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-row -->
+  </div><!-- /content -->
+
+</div><!-- /slide -->
+
+<script>
+// Generate stars
+var starsEl = document.getElementById('stars');
+var html = '';
+for (var i = 0; i < 120; i++) {
+  var x = Math.random() * 100;
+  var y = Math.random() * 55; // only upper portion (sky)
+  var size = Math.random() * 1.6 + 0.4;
+  var opacity = Math.random() * 0.6 + 0.2;
+  html += '<div class="star" style="left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;opacity:'+opacity+'"></div>';
+}
+starsEl.innerHTML = html;
+</script>
+</body>
+</html>

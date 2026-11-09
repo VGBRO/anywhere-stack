@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anywhere Stack — Architecture</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#030810;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.slide-wrap{width:1280px;height:720px;transform-origin:center center}
+.slide{width:1280px;height:720px;background:linear-gradient(135deg,#060d20 0%,#0a1832 50%,#0d2248 100%);position:relative;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;overflow:hidden;padding:14px 16px 0}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.header-left{display:flex;align-items:baseline;gap:10px}
+.header-title{font-size:26px;font-weight:800;letter-spacing:-.3px;background:linear-gradient(90deg,#22d3ee,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-sub{font-size:20px;font-weight:600;color:#fff}
+.sf-logo{display:flex;align-items:center;gap:6px}
+.sf-cloud{width:36px;height:26px}
+
+/* MAIN GRID */
+.main{display:flex;gap:8px;height:610px;align-items:flex-start}
+
+/* COLUMN LABELS */
+.col-label{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;white-space:nowrap}
+.pill-purple{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff}
+.pill-outline{border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.75);background:transparent}
+
+/* CARDS */
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px}
+.card-header{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#22d3ee;margin-bottom:8px}
+.card ul{list-style:none;padding:0}
+.card ul li{font-size:10.5px;color:rgba(255,255,255,.78);padding:2px 0 2px 12px;position:relative;line-height:1.4}
+.card ul li::before{content:'•';position:absolute;left:2px;color:#06b6d4}
+
+/* ── COL 1: PHONE ── */
+.col-phone{width:215px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start}
+.phone-wrap{position:relative;width:168px;margin:0 auto}
+.phone-frame{width:168px;height:310px;background:#0f1523;border:2.5px solid #2a3a5c;border-radius:26px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.phone-notch{width:52px;height:10px;background:#0f1523;border-radius:0 0 8px 8px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2}
+.phone-inner{padding:14px 7px 7px;height:100%;overflow:hidden;display:flex;flex-direction:column;gap:4px}
+.phone-status{display:flex;justify-content:space-between;align-items:center;font-size:8px;color:rgba(255,255,255,.6);margin-bottom:2px}
+.phone-topbar{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.phone-logo{font-size:8px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:1px}
+.phone-pill{display:inline-flex;align-items:center;gap:2px;padding:1.5px 5px;border-radius:999px;font-size:7px;font-weight:600}
+.pill-online{background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.5);color:#10b981}
+.pill-firmos{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7)}
+.phone-greeting{font-size:14px;font-weight:600;color:#fff;line-height:1.2}
+.phone-sub{font-size:8px;color:rgba(255,255,255,.45);margin-bottom:3px}
+.phone-section{font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px}
+.proj-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:5px 6px;margin-bottom:3px}
+.proj-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.proj-name{font-size:9px;font-weight:600;color:#fff}
+.proj-tag{padding:1px 5px;border-radius:999px;font-size:7px;font-weight:600}
+.tag-personal{background:rgba(16,185,129,.25);color:#10b981}
+.tag-work{background:rgba(59,130,246,.25);color:#60a5fa}
+.proj-desc{font-size:7.5px;color:rgba(255,255,255,.5);line-height:1.3;margin-bottom:3px}
+.proj-tags{display:flex;gap:3px;flex-wrap:wrap}
+.proj-tag-sm{font-size:6.5px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);padding:1px 4px;border-radius:3px}
+.phone-input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:5px 8px;display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.phone-input-text{font-size:8px;color:rgba(255,255,255,.3)}
+.phone-mic{font-size:10px}
+
+/* ── COL 2: SLM ── */
+.col-slm{width:165px;flex-shrink:0;display:flex;flex-direction:column}
+.haiku-box{background:rgba(6,182,212,.08);border:1.5px solid rgba(6,182,212,.35);border-radius:10px;padding:12px 10px;text-align:center;margin-bottom:8px}
+.haiku-icon{font-size:18px;margin-bottom:4px}
+.haiku-label{font-size:13px;font-weight:700;color:#22d3ee;letter-spacing:.5px}
+.haiku-sub{font-size:9px;color:rgba(6,182,212,.7);margin-top:2px}
+
+/* ── COL 3: CLOUD ── */
+.col-cloud{width:218px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+.cos-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;overflow:hidden}
+.cos-header{background:linear-gradient(90deg,rgba(6,182,212,.25),rgba(139,92,246,.2));padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.cos-title{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#22d3ee}
+.cos-body{padding:8px 10px}
+.cos-body ul{list-style:none}
+.cos-body ul li{font-size:10px;color:rgba(255,255,255,.78);padding:2.5px 0 2.5px 12px;position:relative;line-height:1.4}
+.cos-body ul li::before{content:'•';position:absolute;left:2px;color:#06b6d4}
+.opus-pill{display:inline-flex;margin:6px 10px 8px;padding:3px 10px;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.8px;color:#fff}
+
+.agents-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px}
+.agents-title{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#a78bfa;margin-bottom:6px;text-align:center}
+.agents-grid{display:flex;gap:5px}
+.agent-card{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 4px;text-align:center}
+.agent-icon{font-size:14px;margin-bottom:3px}
+.agent-name{font-size:9px;font-weight:700;color:#fff;margin-bottom:1px}
+.agent-sub{font-size:7.5px;color:rgba(255,255,255,.45);line-height:1.3}
+
+/* ── COL 4: FIRMOS ── */
+.col-firmos{width:220px;flex-shrink:0;display:flex;flex-direction:column}
+.firmos-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;flex:1;overflow:hidden}
+.firmos-header{background:linear-gradient(90deg,rgba(124,58,237,.3),rgba(168,85,247,.2));padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.firmos-title{font-size:12px;font-weight:800;letter-spacing:.8px;color:#c4b5fd}
+.firmos-body{padding:8px 10px;display:flex;flex-direction:column;gap:8px}
+.firmos-section{font-size:8.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px}
+.firmos-body ul{list-style:none}
+.firmos-body ul li{font-size:9.5px;color:rgba(255,255,255,.72);padding:1.5px 0 1.5px 12px;position:relative;line-height:1.4}
+.firmos-body ul li::before{content:'•';position:absolute;left:2px;color:#a78bfa}
+.ciso-pill{display:inline-flex;padding:3px 8px;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:999px;font-size:8px;font-weight:700;letter-spacing:.5px;color:#fff;margin:2px 0}
+
+/* ── COL 5: ENTERPRISE ── */
+.col-enterprise{width:150px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+.ent-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px}
+.ent-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;display:flex;align-items:center;gap:8px}
+.ent-icon{font-size:16px;flex-shrink:0}
+.ent-sf-icon{width:20px;height:20px;flex-shrink:0}
+.ent-name{font-size:10px;font-weight:700;color:#fff}
+.ent-sub{font-size:8px;color:rgba(255,255,255,.45)}
+
+/* ── ARROWS ── */
+.arrow-row{display:flex;align-items:center;gap:0;position:absolute}
+.arr-line{height:1.5px;background:#06b6d4}
+.arr-line-dashed{height:1.5px;background:repeating-linear-gradient(90deg,#06b6d4 0px,#06b6d4 5px,transparent 5px,transparent 9px)}
+.arr-head-r{width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:7px solid #06b6d4}
+.arr-head-l{width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-right:7px solid #06b6d4}
+.arr-label{font-size:8px;color:rgba(6,182,212,.85);white-space:nowrap;position:absolute;top:-13px;left:50%;transform:translateX(-50%);text-align:center;line-height:1.3}
+.arr-label-below{top:auto;bottom:-22px}
+.arr-amber .arr-line,.arr-amber .arr-line-dashed{background:#f59e0b}
+.arr-amber .arr-head-r{border-left-color:#f59e0b}
+.arr-amber .arr-head-d::after{border-top-color:#f59e0b}
+
+/* BOTTOM BAR */
+.bottom-bar{position:absolute;bottom:0;left:0;right:0;height:68px;background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;padding:5px 16px}
+.bottom-label{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:5px}
+.bottom-label span{color:rgba(255,255,255,.55)}
+.bottom-items{display:flex;gap:0;flex:1}
+.bottom-item{flex:1;display:flex;align-items:center;gap:7px;padding:0 8px;border-right:1px solid rgba(255,255,255,.07)}
+.bottom-item:last-child{border-right:none}
+.bottom-item-icon{font-size:14px;flex-shrink:0}
+.bottom-item-name{font-size:9.5px;font-weight:700;color:#fff}
+.bottom-item-sub{font-size:8px;color:rgba(255,255,255,.4)}
+
+/* AMBER VERTICAL ARROWS */
+.v-arrow{position:absolute;display:flex;flex-direction:column;align-items:center}
+.v-line{width:1.5px;background:#f59e0b}
+.v-head{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid #f59e0b}
+.v-label{font-size:7.5px;color:#f59e0b;white-space:nowrap;margin-left:4px;position:absolute;left:8px;top:30%}
+</style>
+</head>
+<body>
+<div class="slide-wrap">
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <span class="header-title">ANYWHERE STACK</span>
+      <span class="header-sub">- Your intelligence never stops.</span>
+    </div>
+    <div class="sf-logo">
+      <svg class="sf-cloud" viewBox="0 0 50 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.8 6.4C22.5 4.5 24.9 3.3 27.6 3.3c3.7 0 6.9 2 8.6 5 1.3-.6 2.7-.9 4.2-.9 5.3 0 9.6 4.3 9.6 9.6s-4.3 9.6-9.6 9.6H13.2C8.1 26.6 4 22.5 4 17.4c0-4.6 3.2-8.5 7.5-9.4-.1-.5-.2-1-.2-1.5C11.3 3 14.3 0 18 0c1.5 0 2.9.5 4 1.3" fill="#1589ee"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- COL 1: PHONE -->
+    <div class="col-phone">
+      <div class="col-label pill-purple" style="font-size:9px">Your phone. ANYWHERE APP</div>
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-inner">
+            <div class="phone-status"><span>18:01</span><span>▲ ◼ 🔋</span></div>
+            <div class="phone-topbar">
+              <span class="phone-logo">✦ ANYWHERE</span>
+              <div class="phone-pill pill-online">● Online</div>
+              <div class="phone-pill pill-firmos">Firm OS</div>
+            </div>
+            <div class="phone-greeting">Good evening.</div>
+            <div class="phone-sub">Your world is moving.</div>
+            <div class="phone-section">Active Projects</div>
+            <div class="proj-card">
+              <div class="proj-top"><span class="proj-name">Backyard ADU</span><span class="proj-tag tag-personal">personal</span></div>
+              <div class="proj-desc">Permit submitted Sept 14. City review in progress. Three contractor quotes received.</div>
+              <div class="proj-tags"><span class="proj-tag-sm">real-estate</span><span class="proj-tag-sm">construction</span></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-top"><span class="proj-name">India AI Infrastructure</span><span class="proj-tag tag-work">work</span></div>
+              <div class="proj-desc">Outline complete. Reviewing NVIDIA × Reliance partnership. Need GPU allocation data.</div>
+              <div class="proj-tags"><span class="proj-tag-sm">policy</span><span class="proj-tag-sm">AI</span><span class="proj-tag-sm">research</span></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-top"><span class="proj-name">Anywhere Stack</span><span class="proj-tag tag-work">work</span></div>
+              <div class="proj-desc">Claude pipeline live. Demo ready.</div>
+              <div class="proj-tags"><span class="proj-tag-sm">product</span><span class="proj-tag-sm">engineering</span><span class="proj-tag-sm">demo</span></div>
+            </div>
+            <div class="phone-input">
+              <span class="phone-input-text">What's on your mind...</span>
+              <span class="phone-mic">🎙</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE → SLM ARROW LABEL -->
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:32px;margin-top:120px;flex-shrink:0">
+      <div style="font-size:8px;color:#22d3ee;text-align:center;margin-bottom:4px;line-height:1.3">Voice<br>or Text</div>
+      <div style="display:flex;align-items:center">
+        <div style="width:18px;height:1.5px;background:#06b6d4"></div>
+        <div style="width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid #06b6d4"></div>
+      </div>
+    </div>
+
+    <!-- COL 2: SLM -->
+    <div class="col-slm">
+      <div class="col-label pill-purple">ON-DEVICE SLM</div>
+      <div class="haiku-box">
+        <div class="haiku-icon">✦</div>
+        <div class="haiku-label">Claude Haiku</div>
+        <div class="haiku-sub">On-device model</div>
+      </div>
+      <div class="card" style="flex:1">
+        <ul>
+          <li>Understands your current context.</li>
+          <li>Answers from local project memory</li>
+          <li>Takes new requests</li>
+          <li>Queues work offline</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SLM ↔ CoS ARROWS -->
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:42px;margin-top:100px;flex-shrink:0;gap:10px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font-size:7.5px;color:rgba(6,182,212,.8);text-align:center;line-height:1.3;margin-bottom:2px">When online<br>send request<br>+ context</div>
+        <div style="display:flex;align-items:center">
+          <div style="width:26px;height:1.5px;background:repeating-linear-gradient(90deg,#06b6d4 0px,#06b6d4 4px,transparent 4px,transparent 7px)"></div>
+          <div style="width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-left:6px solid #06b6d4"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="display:flex;align-items:center">
+          <div style="width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-right:6px solid #06b6d4"></div>
+          <div style="width:26px;height:1.5px;background:repeating-linear-gradient(90deg,#06b6d4 0px,#06b6d4 4px,transparent 4px,transparent 7px)"></div>
+        </div>
+        <div style="font-size:7.5px;color:rgba(6,182,212,.8);text-align:center;line-height:1.3;margin-top:2px">Sync results<br>and updates</div>
+      </div>
+    </div>
+
+    <!-- COL 3: CLOUD / CoS -->
+    <div class="col-cloud">
+      <div class="col-label pill-purple" style="font-size:9px">CLOUD INTELLIGENCE. Claude</div>
+      <div class="cos-box">
+        <div class="cos-header"><div class="cos-title">CHIEF OF STAFF</div></div>
+        <div class="cos-body">
+          <ul>
+            <li>Understands full project context.</li>
+            <li>Plans and delegates work</li>
+            <li>Coordinates specialized agents</li>
+            <li>Returns updates and results</li>
+          </ul>
+          <div class="opus-pill">CLAUDE OPUS</div>
+        </div>
+      </div>
+
+      <!-- CoS DOWN arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;padding:4px 0">
+        <div style="width:1.5px;height:10px;background:#06b6d4"></div>
+        <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #06b6d4"></div>
+      </div>
+
+      <div class="agents-box">
+        <div class="agents-title">SPECIALIZED AGENTS</div>
+        <div class="agents-grid">
+          <div class="agent-card"><div class="agent-icon">📄</div><div class="agent-name">Research</div><div class="agent-sub">Web · Data · Documents</div></div>
+          <div class="agent-card"><div class="agent-icon">⚙️</div><div class="agent-name">Build</div><div class="agent-sub">Code · Analyze · Synthesize</div></div>
+          <div class="agent-card"><div class="agent-icon">📋</div><div class="agent-name">Act</div><div class="agent-sub">Draft · Plan · Prepare</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CoS → FirmOS ARROWS -->
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;margin-top:80px;flex-shrink:0;gap:12px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font-size:7.5px;color:rgba(6,182,212,.8);text-align:center;line-height:1.3;margin-bottom:2px">Authorized<br>request<br>with context</div>
+        <div style="display:flex;align-items:center">
+          <div style="width:28px;height:1.5px;background:#06b6d4"></div>
+          <div style="width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-left:6px solid #06b6d4"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="display:flex;align-items:center">
+          <div style="width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-right:6px solid #06b6d4"></div>
+          <div style="width:28px;height:1.5px;background:#06b6d4"></div>
+        </div>
+        <div style="font-size:7.5px;color:rgba(6,182,212,.8);text-align:center;line-height:1.3;margin-top:2px">Results and<br>actions<br>(follow policy)</div>
+      </div>
+    </div>
+
+    <!-- COL 4: FIRMOS -->
+    <div class="col-firmos">
+      <div class="col-label pill-purple" style="font-size:8.5px;white-space:nowrap">ENTERPRISE TRUST BOUNDARY — FirmOS</div>
+      <div class="firmos-box">
+        <div class="firmos-header"><div class="firmos-title">FirmOS</div></div>
+        <div class="firmos-body">
+          <div>
+            <div class="firmos-section">IN-BAND</div>
+            <ul>
+              <li>Evals &amp; test harness</li>
+              <li>Guardrails &amp; policy checks</li>
+              <li>Tool and action controls</li>
+              <li>Context filtering</li>
+              <li>Runtime permissions</li>
+            </ul>
+            <div style="margin-top:6px"><span class="ciso-pill">CISO-READY AGENT GATEWAY</span></div>
+          </div>
+          <div>
+            <div class="firmos-section">OUT OF BAND</div>
+            <ul>
+              <li>Independent monitoring</li>
+              <li>Gateway and proxy</li>
+              <li>Policy enforcement</li>
+              <li>Audit logs &amp; observability</li>
+              <li>Threat detection &amp; DLP</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FirmOS → Enterprise ARROW -->
+    <div style="display:flex;align-items:center;justify-content:center;width:16px;margin-top:160px;flex-shrink:0">
+      <div style="display:flex;align-items:center">
+        <div style="width:8px;height:1.5px;background:#06b6d4"></div>
+        <div style="width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-left:5px solid #06b6d4"></div>
+      </div>
+    </div>
+
+    <!-- COL 5: ENTERPRISE SYSTEMS -->
+    <div class="col-enterprise">
+      <div class="ent-label">Enterprise Systems</div>
+      <div class="ent-card">
+        <svg class="ent-sf-icon" viewBox="0 0 50 34" fill="none"><path d="M20.8 6.4C22.5 4.5 24.9 3.3 27.6 3.3c3.7 0 6.9 2 8.6 5 1.3-.6 2.7-.9 4.2-.9 5.3 0 9.6 4.3 9.6 9.6s-4.3 9.6-9.6 9.6H13.2C8.1 26.6 4 22.5 4 17.4c0-4.6 3.2-8.5 7.5-9.4-.1-.5-.2-1-.2-1.5C11.3 3 14.3 0 18 0c1.5 0 2.9.5 4 1.3" fill="#1589ee"/></svg>
+        <div><div class="ent-name">Salesforce</div><div class="ent-sub">CRM · Data · Workflows</div></div>
+      </div>
+      <div class="ent-card">
+        <span class="ent-icon">#</span>
+        <div><div class="ent-name">Slack</div><div class="ent-sub">Teams · Collaboration</div></div>
+      </div>
+      <div class="ent-card">
+        <span class="ent-icon">⬡</span>
+        <div><div class="ent-name">GitHub</div><div class="ent-sub">Code · Projects</div></div>
+      </div>
+      <div class="ent-card">
+        <span class="ent-icon">🗄</span>
+        <div><div class="ent-name">Internal Systems</div><div class="ent-sub">Data · Applications</div></div>
+      </div>
+      <div class="ent-card">
+        <span class="ent-icon">⊞</span>
+        <div><div class="ent-name">Other Tools</div><div class="ent-sub">MCP · APIs · Services</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- AMBER DOWN ARROWS TO BOTTOM BAR -->
+  <!-- SLM amber arrow -->
+  <div style="position:absolute;left:332px;bottom:68px;display:flex;flex-direction:column;align-items:center">
+    <div style="width:1.5px;height:22px;background:#f59e0b"></div>
+    <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #f59e0b"></div>
+    <div style="position:absolute;left:8px;top:2px;font-size:7.5px;color:#f59e0b;white-space:nowrap">Offline mode</div>
+  </div>
+  <!-- CoS amber arrow -->
+  <div style="position:absolute;left:658px;bottom:68px;display:flex;flex-direction:column;align-items:center">
+    <div style="width:1.5px;height:22px;background:#f59e0b"></div>
+    <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #f59e0b"></div>
+  </div>
+  <!-- FirmOS amber arrow -->
+  <div style="position:absolute;left:904px;bottom:68px;display:flex;flex-direction:column;align-items:center">
+    <div style="width:1.5px;height:22px;background:#f59e0b"></div>
+    <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid #f59e0b"></div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <div class="bottom-label">PERSISTENT CONTEXT REPOSITORY — <span>YOUR PROJECTS. YOUR MEMORY. YOUR INTELLIGENCE.</span></div>
+    <div class="bottom-items">
+      <div class="bottom-item"><span class="bottom-item-icon">⬡</span><div><div class="bottom-item-name">GitHub</div><div class="bottom-item-sub">Durable project state</div></div></div>
+      <div class="bottom-item"><span class="bottom-item-icon">📁</span><div><div class="bottom-item-name">Projects</div><div class="bottom-item-sub">Goals · State · Actions · Memory</div></div></div>
+      <div class="bottom-item"><span class="bottom-item-icon">📄</span><div><div class="bottom-item-name">Decisions</div><div class="bottom-item-sub">What and why</div></div></div>
+      <div class="bottom-item"><span class="bottom-item-icon">🖼</span><div><div class="bottom-item-name">Evidence</div><div class="bottom-item-sub">Research · Data · Artifacts</div></div></div>
+      <div class="bottom-item"><span class="bottom-item-icon">💡</span><div><div class="bottom-item-name">Learnings</div><div class="bottom-item-sub">What worked · What didn't</div></div></div>
+      <div class="bottom-item"><span class="bottom-item-icon">⚙️</span><div><div class="bottom-item-name">Configurations</div><div class="bottom-item-sub">Agents · Tools · Preferences</div></div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function scale(){
+  var w=window.innerWidth,h=window.innerHeight;
+  var s=Math.min(w/1280,h/720);
+  document.querySelector('.slide-wrap').style.transform='scale('+s+')';
+}
+scale();
+window.addEventListener('resize',scale);
+</script>
+</body>
+</html>
