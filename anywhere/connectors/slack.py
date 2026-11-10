@@ -126,6 +126,57 @@ def _make_client() -> WebClient:
     return WebClient(token=token)
 
 
+def get_caller_first_name(client: WebClient) -> str:
+    """Return the first name of the Slack user who owns the bot token.
+
+    Falls back to the display name, then 'you' if nothing is available.
+    Uses auth.test to find the user ID, then users.profile.get for the name.
+    """
+    try:
+        auth = client.auth_test()
+        user_id = auth.get("user_id") or auth.get("user")
+        if not user_id:
+            return "you"
+        profile = client.users_profile_get(user=user_id).get("profile", {})
+        first = (
+            profile.get("first_name")
+            or (profile.get("real_name") or "").split()[0]
+            or profile.get("display_name")
+            or "you"
+        )
+        return first.strip() or "you"
+    except SlackApiError:
+        return "you"
+
+
+def get_or_create_cos_channel(client: WebClient) -> tuple[str, str]:
+    """Find or create the Chief of Staff channel for this user.
+
+    Channel name is personalised: "<first_name>s-chief-of-staff"
+    (e.g. "varuns-chief-of-staff" for Varun).
+
+    Returns (channel_id, channel_name).
+    """
+    first = get_caller_first_name(client)
+    # Slack channel names: lowercase, hyphens, max 80 chars, no apostrophes
+    safe_name = first.lower().replace("'", "").replace(" ", "-")
+    channel_name = f"{safe_name}s-chief-of-staff"
+
+    # Check if it already exists
+    try:
+        existing_id = _resolve_channel_id(client, f"#{channel_name}")
+        return existing_id, channel_name
+    except ValueError:
+        pass  # doesn't exist yet — create it
+
+    try:
+        result = client.conversations_create(name=channel_name, is_private=True)
+        channel_id = result["channel"]["id"]
+        return channel_id, channel_name
+    except SlackApiError as e:
+        raise RuntimeError(f"Could not create CoS channel #{channel_name}: {e}") from e
+
+
 def _resolve_channel_id(client: WebClient, channel: str) -> str:
     """Resolve #channel-name → channel ID. Pass-through if already an ID."""
     if not channel.startswith("#"):
