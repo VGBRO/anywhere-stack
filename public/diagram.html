@@ -431,7 +431,6 @@ html,body{width:100%;height:100%;background:#030810;display:flex;align-items:cen
   transition: background .15s, border-color .15s;
 }
 #export-panel button:hover { background: rgba(6,182,212,.18); border-color: rgba(6,182,212,.5); }
-#export-panel button.active { background: rgba(6,182,212,.28); border-color: rgba(6,182,212,.8); color: #22d3ee; }
 #export-panel .ep-hint {
   font-size: 9px;
   color: rgba(255,255,255,.35);
@@ -441,15 +440,15 @@ html,body{width:100%;height:100%;background:#030810;display:flex;align-items:cen
 </style>
 
 <div id="export-panel">
-  <div class="ep-title">Export</div>
-  <button onclick="isolate('full')" id="btn-full">Full Slide</button>
-  <button onclick="isolate('phone')" id="btn-phone">Phone / Intent</button>
-  <button onclick="isolate('slm')" id="btn-slm">On-Device SLM</button>
-  <button onclick="isolate('cloud')" id="btn-cloud">Cloud Intelligence</button>
-  <button onclick="isolate('firmos')" id="btn-firmos">FirmOS</button>
-  <button onclick="isolate('enterprise')" id="btn-enterprise">Enterprise Systems</button>
-  <button onclick="isolate('bottom')" id="btn-bottom">Persistent Context</button>
-  <div class="ep-hint">Click → Cmd+Shift+4<br>to screenshot the component</div>
+  <div class="ep-title">Export as Slide</div>
+  <button onclick="downloadSlide('full')">⬇ Full Slide</button>
+  <button onclick="downloadSlide('phone')">⬇ Phone / Intent</button>
+  <button onclick="downloadSlide('slm')">⬇ On-Device SLM</button>
+  <button onclick="downloadSlide('cloud')">⬇ Cloud Intelligence</button>
+  <button onclick="downloadSlide('firmos')">⬇ FirmOS</button>
+  <button onclick="downloadSlide('enterprise')">⬇ Enterprise Systems</button>
+  <button onclick="downloadSlide('bottom')">⬇ Persistent Context</button>
+  <div class="ep-hint">Downloads a self-contained<br>1280×720 HTML slide file</div>
 </div>
 
 <script>
@@ -461,79 +460,81 @@ function scale(){
 scale();
 window.addEventListener('resize',scale);
 
-/* ---- export/isolation mode ---- */
-var currentMode = 'full';
+/* ---- slide download ---- */
+function downloadSlide(component) {
+  // Grab all CSS from the page's <style> blocks (excluding the export panel styles)
+  var allStyles = Array.from(document.querySelectorAll('style'))
+    .map(function(s){ return s.textContent; })
+    .filter(function(t){ return !t.includes('#export-panel'); })
+    .join('\n');
 
-function isolate(mode) {
-  currentMode = mode;
+  // The full .slide innerHTML
+  var fullSlide = document.querySelector('.slide').innerHTML;
 
-  // Reset all button states
-  document.querySelectorAll('#export-panel button').forEach(function(b){ b.classList.remove('active'); });
-  document.getElementById('btn-'+mode).classList.add('active');
+  // Component HTML — just the relevant piece(s) centred in the slide
+  var componentHTML;
+  var extraStyle = '';
 
-  var slide = document.querySelector('.slide');
-  var main  = document.querySelector('.main');
-  var bottom = document.querySelector('.bottom-bar');
-
-  // Column selectors
-  var colPhone    = document.querySelector('.col-phone');
-  var colSlm      = document.querySelector('.col-slm');
-  var colCloud    = document.querySelector('.col-cloud');
-  var colFirmos   = document.querySelector('.col-firmos');
-  var colEnt      = document.querySelector('.col-enterprise');
-
-  // All inter-column arrows (direct children of .main that aren't .col-*)
-  var arrows = Array.from(main.children).filter(function(el){
-    return !el.classList.contains('col-phone') &&
-           !el.classList.contains('col-slm') &&
-           !el.classList.contains('col-cloud') &&
-           !el.classList.contains('col-firmos') &&
-           !el.classList.contains('col-enterprise');
-  });
-
-  // Amber down arrows and bottom bar
-  var amberArrows = document.querySelectorAll('[style*="position:absolute"]');
-
-  function showAll() {
-    [colPhone,colSlm,colCloud,colFirmos,colEnt].forEach(function(c){ if(c) c.style.opacity=''; c.style.filter=''; });
-    arrows.forEach(function(a){ a.style.opacity=''; });
-    if(bottom) { bottom.style.opacity=''; bottom.style.filter=''; }
-    amberArrows.forEach(function(a){ a.style.opacity=''; });
-    slide.style.background = '';
-    main.style.justifyContent = '';
-  }
-
-  function dimOthers(keepCol) {
-    var cols = { phone:colPhone, slm:colSlm, cloud:colCloud, firmos:colFirmos, enterprise:colEnt };
-    Object.keys(cols).forEach(function(k){
-      if(!cols[k]) return;
-      if(k === keepCol) {
-        cols[k].style.opacity = '1';
-        cols[k].style.filter = '';
-      } else {
-        cols[k].style.opacity = '0.07';
-        cols[k].style.filter = 'grayscale(1)';
-      }
-    });
-    arrows.forEach(function(a){ a.style.opacity = '0.06'; });
-    if(bottom) { bottom.style.opacity = '0.07'; bottom.style.filter = 'grayscale(1)'; }
-    amberArrows.forEach(function(a){ a.style.opacity = '0.06'; });
-  }
-
-  if (mode === 'full') {
-    showAll();
-  } else if (mode === 'bottom') {
-    [colPhone,colSlm,colCloud,colFirmos,colEnt].forEach(function(c){ if(c){ c.style.opacity='0.07'; c.style.filter='grayscale(1)'; }});
-    arrows.forEach(function(a){ a.style.opacity='0.06'; });
-    amberArrows.forEach(function(a){ a.style.opacity='0.06'; });
-    if(bottom){ bottom.style.opacity='1'; bottom.style.filter=''; }
+  if (component === 'full') {
+    componentHTML = fullSlide;
+  } else if (component === 'bottom') {
+    // Isolate bottom bar: hide main, keep bottom-bar prominent
+    extraStyle = '.main{visibility:hidden}.header{visibility:hidden}';
+    componentHTML = fullSlide;
   } else {
-    dimOthers(mode);
+    // Map component key → CSS class
+    var classMap = { phone:'col-phone', slm:'col-slm', cloud:'col-cloud', firmos:'col-firmos', enterprise:'col-enterprise' };
+    var keepClass = classMap[component];
+    // Hide all columns except the target, hide arrows/header, center the column
+    var hideOthers = Object.values(classMap)
+      .filter(function(c){ return c !== keepClass; })
+      .map(function(c){ return '.'+c+'{display:none}'; })
+      .join('');
+    extraStyle = [
+      '.header{visibility:hidden}',
+      hideOthers,
+      // Hide inter-column arrows inside .main (non-column direct children)
+      // We use a workaround: make .main centre its single visible child
+      '.main{justify-content:center;align-items:center;gap:0}',
+      // Hide amber down arrows and bottom bar connections
+      '.bottom-bar{opacity:0.08}'
+    ].join('\n');
+    // Also hide absolute-positioned amber arrows by injecting a rule
+    extraStyle += '\n[style*="position:absolute"]{display:none!important}';
+    componentHTML = fullSlide;
   }
-}
 
-// Start with full slide active
-document.getElementById('btn-full').classList.add('active');
+  var html = [
+    '<!DOCTYPE html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<title>Anywhere Stack — ' + component + '</title>',
+    '<style>',
+    '*{box-sizing:border-box;margin:0;padding:0}',
+    'html,body{width:1280px;height:720px;overflow:hidden;background:#030810}',
+    '.slide-wrap{width:1280px;height:720px}',
+    allStyles,
+    extraStyle,
+    '</style>',
+    '</head>',
+    '<body>',
+    '<div class="slide-wrap"><div class="slide">',
+    componentHTML,
+    '</div></div>',
+    '</body>',
+    '</html>'
+  ].join('\n');
+
+  var blob = new Blob([html], {type:'text/html'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'anywhere-stack-' + component + '.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
 </script>
 </body>
 </html>
