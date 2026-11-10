@@ -393,6 +393,65 @@ html,body{width:100%;height:100%;background:#030810;display:flex;align-items:cen
 </div>
 </div>
 
+<style>
+#export-panel {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  background: rgba(10,14,30,.92);
+  border: 1px solid rgba(6,182,212,.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+}
+#export-panel .ep-title {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(6,182,212,.7);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+#export-panel button {
+  background: rgba(255,255,255,.06);
+  border: .5px solid rgba(255,255,255,.18);
+  border-radius: 7px;
+  color: rgba(255,255,255,.85);
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+#export-panel button:hover { background: rgba(6,182,212,.18); border-color: rgba(6,182,212,.5); }
+#export-panel button.active { background: rgba(6,182,212,.28); border-color: rgba(6,182,212,.8); color: #22d3ee; }
+#export-panel .ep-hint {
+  font-size: 9px;
+  color: rgba(255,255,255,.35);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+</style>
+
+<div id="export-panel">
+  <div class="ep-title">Export</div>
+  <button onclick="isolate('full')" id="btn-full">Full Slide</button>
+  <button onclick="isolate('phone')" id="btn-phone">Phone / Intent</button>
+  <button onclick="isolate('slm')" id="btn-slm">On-Device SLM</button>
+  <button onclick="isolate('cloud')" id="btn-cloud">Cloud Intelligence</button>
+  <button onclick="isolate('firmos')" id="btn-firmos">FirmOS</button>
+  <button onclick="isolate('enterprise')" id="btn-enterprise">Enterprise Systems</button>
+  <button onclick="isolate('bottom')" id="btn-bottom">Persistent Context</button>
+  <div class="ep-hint">Click → Cmd+Shift+4<br>to screenshot the component</div>
+</div>
+
 <script>
 function scale(){
   var w=window.innerWidth,h=window.innerHeight;
@@ -401,6 +460,80 @@ function scale(){
 }
 scale();
 window.addEventListener('resize',scale);
+
+/* ---- export/isolation mode ---- */
+var currentMode = 'full';
+
+function isolate(mode) {
+  currentMode = mode;
+
+  // Reset all button states
+  document.querySelectorAll('#export-panel button').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('btn-'+mode).classList.add('active');
+
+  var slide = document.querySelector('.slide');
+  var main  = document.querySelector('.main');
+  var bottom = document.querySelector('.bottom-bar');
+
+  // Column selectors
+  var colPhone    = document.querySelector('.col-phone');
+  var colSlm      = document.querySelector('.col-slm');
+  var colCloud    = document.querySelector('.col-cloud');
+  var colFirmos   = document.querySelector('.col-firmos');
+  var colEnt      = document.querySelector('.col-enterprise');
+
+  // All inter-column arrows (direct children of .main that aren't .col-*)
+  var arrows = Array.from(main.children).filter(function(el){
+    return !el.classList.contains('col-phone') &&
+           !el.classList.contains('col-slm') &&
+           !el.classList.contains('col-cloud') &&
+           !el.classList.contains('col-firmos') &&
+           !el.classList.contains('col-enterprise');
+  });
+
+  // Amber down arrows and bottom bar
+  var amberArrows = document.querySelectorAll('[style*="position:absolute"]');
+
+  function showAll() {
+    [colPhone,colSlm,colCloud,colFirmos,colEnt].forEach(function(c){ if(c) c.style.opacity=''; c.style.filter=''; });
+    arrows.forEach(function(a){ a.style.opacity=''; });
+    if(bottom) { bottom.style.opacity=''; bottom.style.filter=''; }
+    amberArrows.forEach(function(a){ a.style.opacity=''; });
+    slide.style.background = '';
+    main.style.justifyContent = '';
+  }
+
+  function dimOthers(keepCol) {
+    var cols = { phone:colPhone, slm:colSlm, cloud:colCloud, firmos:colFirmos, enterprise:colEnt };
+    Object.keys(cols).forEach(function(k){
+      if(!cols[k]) return;
+      if(k === keepCol) {
+        cols[k].style.opacity = '1';
+        cols[k].style.filter = '';
+      } else {
+        cols[k].style.opacity = '0.07';
+        cols[k].style.filter = 'grayscale(1)';
+      }
+    });
+    arrows.forEach(function(a){ a.style.opacity = '0.06'; });
+    if(bottom) { bottom.style.opacity = '0.07'; bottom.style.filter = 'grayscale(1)'; }
+    amberArrows.forEach(function(a){ a.style.opacity = '0.06'; });
+  }
+
+  if (mode === 'full') {
+    showAll();
+  } else if (mode === 'bottom') {
+    [colPhone,colSlm,colCloud,colFirmos,colEnt].forEach(function(c){ if(c){ c.style.opacity='0.07'; c.style.filter='grayscale(1)'; }});
+    arrows.forEach(function(a){ a.style.opacity='0.06'; });
+    amberArrows.forEach(function(a){ a.style.opacity='0.06'; });
+    if(bottom){ bottom.style.opacity='1'; bottom.style.filter=''; }
+  } else {
+    dimOthers(mode);
+  }
+}
+
+// Start with full slide active
+document.getElementById('btn-full').classList.add('active');
 </script>
 </body>
 </html>
