@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Anywhere Stack — Try It</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  width:1280px;height:720px;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:#060e28;
+}
+
+/* ── BACKGROUND ── */
+.bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 70% 60%, rgba(180,100,20,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 65% 70%, rgba(220,130,30,.12) 0%, transparent 50%),
+    linear-gradient(170deg,#04091a 0%,#0a1535 30%,#0e1f45 55%,#0b1830 80%,#060e20 100%);
+}
+/* stars */
+.stars{position:absolute;inset:0;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--lo,.2)}50%{opacity:var(--hi,.9)}}
+
+/* ── LEFT COPY (matching the PDF exactly) ── */
+.left{
+  position:absolute;
+  top:120px;left:60px;
+  width:560px;
+}
+.headline-white{
+  font-size:62px;font-weight:900;
+  color:#fff;
+  line-height:1.05;letter-spacing:-.5px;
+  text-transform:uppercase;
+}
+.headline-teal{
+  font-size:62px;font-weight:900;
+  color:#2dd4bf;
+  line-height:1.05;letter-spacing:-.5px;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+.byline{
+  position:absolute;bottom:60px;left:60px;
+  font-size:14px;font-weight:700;
+  color:#fff;letter-spacing:1.5px;
+  text-transform:uppercase;line-height:1.6;
+}
+
+/* ── TERMINAL CARD ── */
+.terminal{
+  position:absolute;
+  bottom:52px;right:52px;
+  width:520px;
+  background:rgba(8,14,32,.92);
+  border:1px solid rgba(6,182,212,.35);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(6,182,212,.1);
+  backdrop-filter:blur(20px);
+  animation:slideUp .6s cubic-bezier(.16,1,.3,1) both;
+  animation-delay:0.3s;
+}
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* titlebar */
+.t-bar{
+  background:rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:9px 14px;
+  display:flex;align-items:center;gap:8px;
+}
+.t-dots{display:flex;gap:6px}
+.t-dot{width:11px;height:11px;border-radius:50%}
+.t-dot.r{background:#ff5f57}.t-dot.y{background:#ffbd2e}.t-dot.g{background:#28ca41}
+.t-label{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-left:auto;font-family:'SF Mono',monospace}
+.t-badge{
+  font-size:9px;font-weight:700;letter-spacing:1px;
+  background:linear-gradient(90deg,#06b6d4,#7c3aed);
+  color:#fff;padding:2px 8px;border-radius:999px;
+  margin-left:6px;
+}
+
+/* body */
+.t-body{padding:14px 16px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.7}
+.t-prompt-label{
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(6,182,212,.6);margin-bottom:10px;font-family:-apple-system,sans-serif;
+}
+.t-line{display:flex;align-items:flex-start;gap:6px;min-height:20px}
+.t-chevron{color:#22d3ee;flex-shrink:0;margin-top:1px}
+.t-text{color:rgba(255,255,255,.85);white-space:pre-wrap;word-break:break-all}
+.t-text .hi{color:#22d3ee}
+.t-text .dim{color:rgba(255,255,255,.35)}
+.t-text .teal{color:#2dd4bf}
+.t-text .purple{color:#a78bfa}
+
+/* output lines */
+.t-out{padding-left:14px;min-height:20px}
+.t-out .bullet{color:#22d3ee;margin-right:6px}
+.t-out .ok{color:#10b981}
+.t-out .muted{color:rgba(255,255,255,.38);font-size:11px}
+
+/* cursor */
+.cursor{
+  display:inline-block;width:7px;height:13px;
+  background:#22d3ee;border-radius:1px;
+  vertical-align:middle;margin-left:1px;
+  animation:blink .9s steps(1) infinite;
+}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* spinner */
+.spinner{
+  display:inline-block;
+  animation:spin .8s linear infinite;
+  color:#22d3ee;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* lines hidden by default, shown via JS */
+.line-group{opacity:0;transition:opacity .15s}
+.line-group.visible{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="stars" id="stars"></div>
+
+<!-- LEFT COPY -->
+<div class="left">
+  <div class="headline-white">YOUR LIFE IS THE PROMPT</div>
+  <div class="headline-teal">EVERYTHING ELSE<br>IS THE OUTPUT</div>
+</div>
+
+<div class="byline">THANK YOU,<br>VARUN GURUVUGARI</div>
+
+<!-- TERMINAL CARD -->
+<div class="terminal">
+  <div class="t-bar">
+    <div class="t-dots">
+      <div class="t-dot r"></div>
+      <div class="t-dot y"></div>
+      <div class="t-dot g"></div>
+    </div>
+    <span class="t-label">anywhere-stack</span>
+    <span class="t-badge">CLAUDE CODE</span>
+  </div>
+  <div class="t-body">
+    <div class="t-prompt-label">↓ Paste this in Claude Code</div>
+
+    <!-- The prompt being typed -->
+    <div class="t-line">
+      <span class="t-chevron">›</span>
+      <span class="t-text" id="typed-text"><span class="cursor" id="cursor"></span></span>
+    </div>
+
+    <!-- Output lines, revealed one by one -->
+    <div id="output" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<script>
+/* ── stars ── */
+(function(){
+  var s=document.getElementById('stars');
+  for(var i=0;i<120;i++){
+    var d=document.createElement('div');
+    d.className='star';
+    var size=Math.random()*2+.5;
+    d.style.cssText='width:'+size+'px;height:'+size+'px;top:'+Math.random()*100+'%;left:'+Math.random()*100+'%;--d:'+(2+Math.random()*4)+'s;--delay:'+(Math.random()*5)+'s;--lo:'+(0.1+Math.random()*.2)+';--hi:'+(0.5+Math.random()*.5)+';';
+    s.appendChild(d);
+  }
+})();
+
+/* ── typewriter ── */
+var PROMPT = "Clone git.soma.salesforce.com/\nvguruvugari/anywhere-stack\n\nCreate project \"Backyard ADU\"\nGoal: Build rental income ADU\n\nRun CoS heartbeat → post to Slack";
+
+var OUTPUT_LINES = [
+  {type:'spinner', text:'Cloning repo…',        delay:200},
+  {type:'ok',      text:'Repo cloned',           delay:800},
+  {type:'spinner', text:'Scaffolding Project Brain…', delay:400},
+  {type:'ok',      text:'Brain ready  (5 sections)', delay:900},
+  {type:'spinner', text:'Running CoS heartbeat…',delay:400},
+  {type:'ok',      text:'Heartbeat complete',    delay:1000},
+  {type:'spinner', text:'Posting to #vg-chief-of-staff…', delay:300},
+  {type:'ok',      text:'Slack updated ✓',       delay:600},
+  {type:'muted',   text:'Your intelligence is live.', delay:400},
+];
+
+var typedEl  = document.getElementById('typed-text');
+var cursorEl = document.getElementById('cursor');
+var outputEl = document.getElementById('output');
+
+var CHAR_DELAY  = 28;   // ms per character
+var LINE_PAUSE  = 180;  // pause between prompt lines
+var CYCLE_PAUSE = 3200; // pause before restarting
+
+function sleep(ms){ return new Promise(function(r){setTimeout(r,ms);}); }
+
+function clearOutput(){
+  outputEl.innerHTML = '';
+}
+
+async function typePrompt(){
+  typedEl.textContent = '';
+  typedEl.appendChild(cursorEl);
+  var lines = PROMPT.split('\n');
+  for(var l=0;l<lines.length;l++){
+    var line = lines[l];
+    if(line === ''){
+      // blank line — just insert a br
+      var br = document.createElement('br');
+      typedEl.insertBefore(br, cursorEl);
+      await sleep(LINE_PAUSE);
+      continue;
+    }
+    for(var c=0;c<line.length;c++){
+      var ch = line[c];
+      var t = document.createTextNode(ch);
+      typedEl.insertBefore(t, cursorEl);
+      await sleep(CHAR_DELAY + (Math.random()*14 - 7));
+    }
+    if(l < lines.length-1){
+      var br2 = document.createElement('br');
+      typedEl.insertBefore(br2, cursorEl);
+      await sleep(LINE_PAUSE);
+    }
+  }
+  // hide cursor when done typing
+  cursorEl.style.display = 'none';
+  await sleep(400);
+}
+
+async function showOutput(){
+  for(var i=0;i<OUTPUT_LINES.length;i++){
+    var item = OUTPUT_LINES[i];
+    await sleep(item.delay);
+    var row = document.createElement('div');
+    row.className = 't-out';
+    if(item.type === 'spinner'){
+      row.innerHTML = '<span class="spinner">◌</span> <span class="muted">'+item.text+'</span>';
+    } else if(item.type === 'ok'){
+      row.innerHTML = '<span class="ok">✓</span> <span class="t-text teal">'+item.text+'</span>';
+      // find previous spinner row and replace spinner with check
+      var prev = outputEl.lastChild;
+      if(prev && prev.querySelector('.spinner')){
+        outputEl.removeChild(prev);
+      }
+    } else {
+      row.innerHTML = '<span class="muted">'+item.text+'</span>';
+    }
+    outputEl.appendChild(row);
+    // auto-scroll
+    row.scrollIntoView({block:'nearest'});
+  }
+}
+
+async function runCycle(){
+  // reset
+  clearOutput();
+  cursorEl.style.display = 'inline-block';
+  // type the prompt
+  await typePrompt();
+  await sleep(300);
+  // show output
+  await showOutput();
+  // pause at end
+  await sleep(CYCLE_PAUSE);
+}
+
+async function loop(){
+  while(true){
+    await runCycle();
+  }
+}
+
+// start after card slides in
+setTimeout(loop, 900);
+</script>
+</body>
+</html>
