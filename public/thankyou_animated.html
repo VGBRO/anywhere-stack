@@ -182,18 +182,20 @@ html,body{
 })();
 
 /* ── typewriter ── */
-var PROMPT = "Clone git.soma.salesforce.com/\nvguruvugari/anywhere-stack\n\nCreate a project for [what you're working on]\nSet goal: [what success looks like]\n\nRun CoS heartbeat → post to Slack";
+var PROMPT = "Clone git.soma.salesforce.com/\nvguruvugari/anywhere-stack\n\nCreate a project for [what you're working on]\nSet goal: [what success looks like]\n\nConnect Slack: [your-workspace]\n\nRun the CoS heartbeat";
 
 var OUTPUT_LINES = [
-  {type:'spinner', text:'Cloning repo…',        delay:200},
-  {type:'ok',      text:'Repo cloned',           delay:800},
-  {type:'spinner', text:'Scaffolding Project Brain…', delay:400},
-  {type:'ok',      text:'Brain ready  (5 sections)', delay:900},
-  {type:'spinner', text:'Running CoS heartbeat…',delay:400},
-  {type:'ok',      text:'Heartbeat complete',    delay:1000},
-  {type:'spinner', text:'Posting to #vg-chief-of-staff…', delay:300},
-  {type:'ok',      text:'Slack updated ✓',       delay:600},
-  {type:'muted',   text:'Your intelligence is live.', delay:400},
+  {type:'spinner', text:'Cloning repo…',                  delay:200},
+  {type:'ok',      text:'Repo ready',                     delay:800},
+  {type:'spinner', text:'Scaffolding Project Brain…',     delay:400},
+  {type:'ok',      text:'Brain created (5 sections)',     delay:900},
+  {type:'spinner', text:'Connecting Slack…',              delay:400},
+  {type:'ok',      text:'#chief-of-staff channel linked', delay:700},
+  {type:'spinner', text:'Running CoS heartbeat…',         delay:400},
+  {type:'ok',      text:'Heartbeat complete',             delay:900},
+  {type:'spinner', text:'Posting summary to Slack…',      delay:300},
+  {type:'ok',      text:'Summary posted ✓',               delay:600},
+  {type:'muted',   text:'Your intelligence is live.',     delay:500},
 ];
 
 var typedEl  = document.getElementById('typed-text');
