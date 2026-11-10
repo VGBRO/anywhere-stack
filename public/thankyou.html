@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anywhere Stack — Try It Yourself</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#030810;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.slide-wrap{width:1280px;height:720px;transform-origin:center center}
+.slide{width:1280px;height:720px;background:linear-gradient(135deg,#060d20 0%,#0a1832 50%,#0d2248 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;padding:48px 72px 40px}
+
+/* ambient glow */
+.glow{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.glow-teal{width:500px;height:300px;background:rgba(6,182,212,.07);top:-60px;right:100px}
+.glow-purple{width:400px;height:300px;background:rgba(124,58,237,.06);bottom:-40px;left:200px}
+
+/* header */
+.top{display:flex;align-items:baseline;gap:16px;margin-bottom:44px;flex-shrink:0}
+.wordmark{font-size:13px;font-weight:300;letter-spacing:7px;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.tag{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px}
+
+/* main layout */
+.body{display:flex;gap:40px;flex:1;min-height:0}
+
+/* left: headline + prompt block */
+.left{flex:1;display:flex;flex-direction:column;gap:20px}
+.headline{font-size:46px;font-weight:800;line-height:1.05;letter-spacing:-.5px;background:linear-gradient(100deg,#fff 40%,rgba(255,255,255,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:14px;color:rgba(255,255,255,.45);line-height:1.6;max-width:480px}
+
+/* prompt block */
+.prompt-wrap{margin-top:auto}
+.prompt-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(6,182,212,.6);margin-bottom:8px}
+.prompt-box{background:rgba(0,0,0,.45);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:16px 20px;font-family:'SF Mono','Fira Code',monospace;font-size:11.5px;line-height:1.75;color:rgba(255,255,255,.82);position:relative}
+.prompt-box::before{content:'>';color:#22d3ee;margin-right:8px;font-weight:700}
+.prompt-highlight{color:#22d3ee}
+.prompt-dim{color:rgba(255,255,255,.38)}
+.cursor{display:inline-block;width:8px;height:13px;background:#22d3ee;border-radius:1px;vertical-align:middle;animation:blink 1s steps(1) infinite;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.copy-btn{position:absolute;top:10px;right:12px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);border-radius:6px;color:#22d3ee;font-size:10px;font-weight:600;letter-spacing:.5px;padding:3px 9px;cursor:pointer;transition:background .15s}
+.copy-btn:hover{background:rgba(6,182,212,.25)}
+
+/* right: 3-step setup */
+.right{width:400px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+.steps-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:4px}
+.step{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+.step-body{}
+.step-title{font-size:12px;font-weight:700;color:#fff;margin-bottom:4px}
+.step-desc{font-size:10.5px;color:rgba(255,255,255,.45);line-height:1.5}
+.step-code{font-family:'SF Mono','Fira Code',monospace;font-size:10px;color:#22d3ee;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:5px;padding:3px 7px;margin-top:5px;display:inline-block}
+
+/* repo pill */
+.repo-row{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:12px}
+.repo-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 14px;font-size:11px;color:rgba(255,255,255,.65)}
+.repo-icon{font-size:13px}
+.repo-url{font-family:'SF Mono','Fira Code',monospace;font-size:10.5px;color:#22d3ee}
+
+/* bottom bar */
+.bottom{position:absolute;bottom:0;left:0;right:0;height:56px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 72px;justify-content:space-between}
+.bottom-left{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px}
+.bottom-right{display:flex;align-items:center;gap:6px}
+.bottom-dot{width:6px;height:6px;border-radius:50%;background:#22d3ee;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}
+.bottom-status{font-size:10px;color:rgba(6,182,212,.7);letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="slide-wrap">
+<div class="slide">
+
+  <div class="glow glow-teal"></div>
+  <div class="glow glow-purple"></div>
+
+  <div class="top">
+    <span class="wordmark">Anywhere Stack</span>
+    <span class="tag">— Try it yourself</span>
+  </div>
+
+  <div class="body">
+
+    <!-- LEFT -->
+    <div class="left">
+      <div class="headline">Your intelligence,<br>configured in<br>one prompt.</div>
+      <div class="sub">The entire Chief of Staff setup — Project Brain, heartbeats, Slack routing — starts with a single Claude Code prompt. No config files to edit by hand.</div>
+
+      <div class="prompt-wrap">
+        <div class="prompt-label">Paste this into Claude Code</div>
+        <div class="prompt-box" id="prompt-text">
+          <button class="copy-btn" onclick="copyPrompt()">Copy</button>
+<span class="prompt-dim"># Set up Anywhere Stack Chief of Staff</span><br>
+<span class="prompt-highlight">Clone</span> github.com/VGBRO/anywhere-stack<br>
+<span class="prompt-highlight">Create</span> <span class="prompt-dim">a project called</span> <span class="prompt-highlight">"[your project name]"</span><br>
+<span class="prompt-highlight">Set goal:</span> <span class="prompt-dim">[what you're trying to accomplish]</span><br>
+<span class="prompt-highlight">Run</span> the Chief of Staff heartbeat<br>
+<span class="prompt-highlight">Post</span> a summary to my Slack<span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="steps-label">3-step setup</div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Clone the repo</div>
+          <div class="step-desc">Open Claude Code, clone the repo, and add your Anthropic API key.</div>
+          <div class="step-code">git clone github.com/VGBRO/anywhere-stack</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Create your first project</div>
+          <div class="step-desc">Tell Claude your project name and goal. It scaffolds the Project Brain — 5 sections, version-controlled.</div>
+          <div class="step-code">anywhere heartbeat example-project</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Connect Slack</div>
+          <div class="step-desc">Add your Slack bot token. The CoS posts updates, surfaces blockers, and routes approvals automatically.</div>
+          <div class="step-code">SLACK_BOT_TOKEN=xoxb-... anywhere slack</div>
+        </div>
+      </div>
+
+      <div class="repo-row">
+        <div class="repo-pill">
+          <span class="repo-icon">⬡</span>
+          <span class="repo-url">github.com/VGBRO/anywhere-stack</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom">
+    <span class="bottom-left">ANYWHERE STACK &nbsp;·&nbsp; BUILT WITH CLAUDE CODE &nbsp;·&nbsp; MIT LICENSE</span>
+    <div class="bottom-right">
+      <div class="bottom-dot"></div>
+      <span class="bottom-status">OPEN SOURCE</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function scale(){
+  var w=window.innerWidth,h=window.innerHeight;
+  var s=Math.min(w/1280,h/720);
+  document.querySelector('.slide-wrap').style.transform='scale('+s+')';
+}
+scale();
+window.addEventListener('resize',scale);
+
+function copyPrompt(){
+  var text = [
+    '# Set up Anywhere Stack Chief of Staff',
+    'Clone github.com/VGBRO/anywhere-stack',
+    'Create a project called "[your project name]"',
+    'Set goal: [what you\'re trying to accomplish]',
+    'Run the Chief of Staff heartbeat',
+    'Post a summary to my Slack'
+  ].join('\n');
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -32,9 +32,9 @@ It's a personal agent that your company's CISO doesn't have to trust blindly. Th
 
 ---
 
-Anywhere Stack runs on NVIDIA Nemotron. On device, NVIDIA Parakeet — a sub-1B model that handles speech-to-text offline, so the agent works even without a connection. In the cloud, Nemotron Ultra 550B on Nebius gives the agent deep understanding of my projects, my priorities, and how I think.
+Anywhere Stack runs on Claude. On device, Claude Haiku handles fast intent capture and local context — lightweight enough to work in constrained environments. In the cloud, Claude Opus gives the Chief of Staff deep understanding of your projects, priorities, and how you think. Claude Sonnet handles planning and task triage in between.
 
-I'm not an ML engineer. Nebius Token Factory let me write evals and fine-tune Nemotron on my own context. That's the part that surprised me most. You don't need a team to make a model that knows you.
+The context doesn't live in the model. It lives in your Project Brain — a structured file you own, under version control you control. Any model can pick it up and continue.
 
 We're building for a future where personal agents are as common as smartphones. When you change devices, jobs, or environments, your personal intelligence should move with you. The enterprise remains protected. The individual keeps their intelligence.
 
@@ -44,15 +44,15 @@ That is Anywhere Stack.
 
 ## How the AI works
 
-| Model | What it does |
-|---|---|
-| Nemotron Nano 30B | Classifies your intent and routes to the right project (~100ms) |
-| Nemotron Ultra 550B | Reads your Project Brain and writes the full response (~2s) |
-| Nemotron Super 120B | Plans tasks and manages project triage |
-| NVIDIA Parakeet (NeMo) | Streams speech to text; works offline on-device |
-| Tavily Search | Real-time web research — current prices, permits, regulations |
+| Model | Role | What it does |
+|---|---|---|
+| Claude Haiku | On-device | Fast intent capture, local context routing (~100ms) |
+| Claude Sonnet | Project Manager | Task planning, triage, project heartbeats (~1s) |
+| Claude Opus | Chief of Staff | Deep reasoning, cross-project strategy, portfolio oversight (~2s) |
+| Web Speech API | Speech-to-text | Browser-native transcription; works offline |
+| Tavily Search | Research tool | Real-time web search for current facts |
 
-All cloud inference runs on **Nebius Token Factory**.
+All cloud inference uses the **Anthropic API**. Get a key at [console.anthropic.com](https://console.anthropic.com).
 
 ---
 
@@ -72,12 +72,12 @@ cd anywhere-stack
 open public/index.html
 ```
 
-The web UI runs without any API keys. For live Nemotron inference:
+The web UI runs without any API keys. For live Claude inference:
 
 ```bash
 uv sync
 cp .env.example .env
-# Add NEBIUS_API_KEY — get one at tokenfactory.nebius.com
+# Add ANTHROPIC_API_KEY — get one at console.anthropic.com
 bash scripts/serve.sh
 # → http://localhost:8080
 ```
@@ -99,7 +99,7 @@ Click **Run**. Three workflows start:
 - `api-server` — FastAPI + Nemotron intent pipeline
 - `anywhere-mobile` — Expo mobile companion
 
-Add `NEBIUS_API_KEY` to Replit Secrets before you run.
+Add `ANTHROPIC_API_KEY` to Replit Secrets before you run.
 
 ---
 
@@ -108,7 +108,7 @@ Add `NEBIUS_API_KEY` to Replit Secrets before you run.
 - Never commit API keys. Use `.env` locally and Replit Secrets on Replit.
 - The API has no authentication. Keep the workspace private until you add access control.
 - Biometric screens in the mobile app are demonstrations, not identity verification.
-- Rotate any exposed key at [tokenfactory.nebius.com](https://tokenfactory.nebius.com).
+- Rotate any exposed key at [console.anthropic.com](https://console.anthropic.com).
 
 ---
 
@@ -120,8 +120,8 @@ anywhere-stack/
 │   └── index.html
 ├── anywhere/               ← Python package
 │   ├── api.py              ← FastAPI server
-│   ├── client.py           ← Nebius Token Factory client
-│   ├── offline.py          ← On-device fallback (Parakeet / Ollama)
+│   ├── client.py           ← Anthropic API client
+│   ├── offline.py          ← On-device fallback (Web Speech API / Whisper)
 │   └── roles/              ← Chief of Staff, PM, Builder roles
 ├── artifacts/
 │   ├── anywhere-mobile/    ← Expo mobile app (React Native)
@@ -134,15 +134,13 @@ anywhere-stack/
 
 ---
 
-## Hackathon
+## Built with
 
-NVIDIA × Nebius Global AI Hackathon 2026 — Personal AI track.
+**Anthropic Claude** — Haiku (on-device), Sonnet (planning), Opus (Chief of Staff). API at [console.anthropic.com](https://console.anthropic.com).
 
-**NVIDIA models:** Parakeet (NeMo), Nemotron Nano 30B, Nemotron Super 120B, Nemotron Ultra 550B.
+**Tavily** — Real-time web search wired into the agent's tool-calling loop. When Claude knows your context but needs current facts — permit requirements, contractor rates, live regulations — it calls Tavily.
 
-**Nebius:** All cloud inference and personal fine-tuning runs on Nebius Token Factory.
-
-**Tavily:** Real-time web search tool wired into the agent's tool-calling loop. When Nemotron knows your context but needs current facts — permit requirements, contractor rates, live regulations — it calls Tavily.
+**Claude Code** — The entire stack was built and iterated using Claude Code as the development environment.
 
 ---
 
