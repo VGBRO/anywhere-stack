@@ -7,7 +7,7 @@ import requests
 
 _BASE = "https://api.github.com"
 _GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-_GITHUB_USER = os.getenv("GITHUB_ORG", "VGBRO")  # default to Varun's handle
+_GITHUB_USER = os.getenv("GITHUB_ORG", os.getenv("GITHUB_USER", ""))
 
 
 def _headers() -> dict:

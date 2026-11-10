@@ -165,7 +165,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "github_list_my_repos",
-            "description": "List all GitHub repositories owned by the configured user (VGBRO).",
+            "description": "List all GitHub repositories owned by the configured user (GITHUB_USER env var).",
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },

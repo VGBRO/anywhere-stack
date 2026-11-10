@@ -67,7 +67,7 @@ Tap the voice orb. Say anything. Watch your Project Brain populate in real time.
 ## Run it locally
 
 ```bash
-git clone https://github.com/VGBRO/anywhere-stack.git
+git clone git.soma.salesforce.com/[username]/anywhere-stack
 cd anywhere-stack
 open public/index.html
 ```
@@ -148,4 +148,4 @@ anywhere-stack/
 
 MIT — see [LICENSE](LICENSE)
 
-Built by [Varun Guruvugari](https://github.com/VGBRO)
+Built by Varun Guruvugari

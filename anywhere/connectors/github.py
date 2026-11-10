@@ -69,9 +69,37 @@ def _get(url: str) -> dict | list | None:
     return r.json()
 
 
+def get_github_username() -> str:
+    """Return the authenticated GitHub username, or a generic placeholder."""
+    token = os.getenv("GITHUB_TOKEN", "")
+    if not token:
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["gh", "api", "user", "--jq", ".login"],
+                capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                name = result.stdout.strip()
+                if name:
+                    return name
+        except Exception:
+            pass
+        return "[your-username]"
+    try:
+        data = _get(f"{_BASE}/user")
+        if isinstance(data, dict):
+            return data.get("login", "[your-username]")
+    except Exception:
+        pass
+    return "[your-username]"
+
+
 def _full_repo(repo: str) -> str:
     if "/" not in repo:
-        owner = os.getenv("GITHUB_ORG", os.getenv("GITHUB_USER", "VGBRO"))
+        owner = os.getenv("GITHUB_ORG", os.getenv("GITHUB_USER", ""))
+        if not owner:
+            owner = get_github_username()
         return f"{owner}/{repo}"
     return repo
 
