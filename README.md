@@ -50,7 +50,7 @@ That is Anywhere Stack.
 | Claude Sonnet | Project Manager | Task planning, triage, project heartbeats (~1s) |
 | Claude Opus | Chief of Staff | Deep reasoning, cross-project strategy, portfolio oversight (~2s) |
 | Web Speech API | Speech-to-text | Browser-native transcription; works offline |
-| Tavily Search | Research tool | Real-time web search for current facts |
+| Web Search | Research tool | Real-time web search for current facts |
 
 All cloud inference uses the **Anthropic API**. Get a key at [console.anthropic.com](https://console.anthropic.com).
 
@@ -96,7 +96,7 @@ python3 -m http.server 8080 --directory public
 Click **Run**. Three workflows start:
 
 - `anywhere-web` — the Liquid Glass web UI
-- `api-server` — FastAPI + Nemotron intent pipeline
+- `api-server` — FastAPI + Claude intent pipeline
 - `anywhere-mobile` — Expo mobile companion
 
 Add `ANTHROPIC_API_KEY` to Replit Secrets before you run.
@@ -138,7 +138,7 @@ anywhere-stack/
 
 **Anthropic Claude** — Haiku (on-device), Sonnet (planning), Opus (Chief of Staff). API at [console.anthropic.com](https://console.anthropic.com).
 
-**Tavily** — Real-time web search wired into the agent's tool-calling loop. When Claude knows your context but needs current facts — permit requirements, contractor rates, live regulations — it calls Tavily.
+**Web Search (Tavily)** — Optional real-time search tool. Wire in any search API for current facts.
 
 **Claude Code** — The entire stack was built and iterated using Claude Code as the development environment.
 

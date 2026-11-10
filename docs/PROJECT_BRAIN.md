@@ -206,4 +206,4 @@ In `anywhere_stack_v5.html`, each project card stores a simplified version of th
 }
 ```
 
-When a user submits an intent, the Nemotron ULTRA model reads the current Brain, processes the new intent, and returns an updated Brain — all five sections updated where relevant. The UI writes the new Brain back to local state. The project accumulates intelligence with every interaction.
+When a user submits an intent, the Claude Opus model reads the current Brain, processes the new intent, and returns an updated Brain — all five sections updated where relevant. The UI writes the new Brain back to local state. The project accumulates intelligence with every interaction.

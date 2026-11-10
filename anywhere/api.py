@@ -1,4 +1,4 @@
-"""Anywhere Stack API — FastAPI server powering the prototype UI via NVIDIA Nemotron on Nebius."""
+"""Anywhere Stack API — FastAPI server powering the Anywhere Stack UI via Claude (Anthropic)."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ Format:
 
 COS_SYSTEM = """You are the Chief of Staff for a personal AI operating system called Anywhere Stack.
 
-You are powered by NVIDIA Nemotron on Nebius Token Factory.
+You are the Anywhere Stack Chief of Staff, powered by Claude Opus.
 
 Your job: given a user's intent and their project context, generate a rich, structured update for the Project Brain.
 
@@ -133,14 +133,14 @@ Format:
 @app.post("/api/intent")
 def process_intent(req: IntentRequest):
     """
-    Online intent processing — two-stage Nemotron pipeline:
+    Online intent processing — two-stage Claude pipeline:
     1. NANO model routes the intent to the right project (fast, ~100ms)
     2. ULTRA model generates the Project Brain update (deep, ~2s)
     """
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Intent text required")
 
-    # Stage 1: Fast routing with Nemotron NANO
+    # Stage 1: Fast routing with Claude Haiku
     project_list = json.dumps([
         {"id": p.id, "name": p.name, "tags": p.tags}
         for p in req.projects
@@ -174,7 +174,7 @@ Route this intent."""
 - State: {matched.state}
 """
 
-    # Stage 2: Deep CoS reasoning with Nemotron ULTRA
+    # Stage 2: Deep CoS reasoning with Claude Opus
     cos_prompt = f"""User intent: {req.text}
 
 Project: {routing.get('project_name', 'New Project')}
@@ -207,7 +207,7 @@ Generate the Project Brain update."""
         "models_used": {
             "router": Model.NANO.value,
             "cos": Model.ULTRA.value,
-            "provider": "Nebius Token Factory",
+            "provider": "Anthropic",
         },
     }
 
@@ -215,7 +215,7 @@ Generate the Project Brain update."""
 @app.post("/api/sync")
 def sync_queue(req: SyncRequest):
     """
-    Process all queued offline intents through Nemotron when back online.
+    Process all queued offline intents through Claude when back online.
     Each queued intent runs through the full two-stage pipeline.
     """
     results = []
@@ -231,14 +231,14 @@ def sync_queue(req: SyncRequest):
 
 @app.get("/health")
 def health():
-    nebius_key_set = bool(os.getenv("NEBIUS_API_KEY"))
+    anthropic_key_set = bool(os.getenv("ANTHROPIC_API_KEY"))
     return {
         "status": "ok",
-        "nebius_configured": nebius_key_set,
+        "anthropic_configured": anthropic_key_set,
         "models": {
             "router": Model.NANO.value,
             "cos": Model.ULTRA.value,
-            "offline": "ollama/nemotron-mini (see offline.py)",
+            "offline": "ollama/llama3.2:1b (see offline.py)",
         },
-        "provider": "Nebius Token Factory",
+        "provider": "Anthropic",
     }

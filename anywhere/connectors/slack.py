@@ -11,7 +11,7 @@ Two responsibilities:
   2.  Extraction behaviors
       slack_thread_extractor  — fires on slack_thread_raw objects
       slack_canvas_extractor  — fires on slack_canvas_raw objects
-      Both call Nemotron-Super to extract Decision / Task / Blocker /
+      Both call Claude Sonnet to extract Decision / Task / Blocker /
       Person entities and write them with epistemic_state=proposed.
 
 Public API:
@@ -24,9 +24,9 @@ Public API:
     create a Runtime with both extraction behaviors registered
 
 Note on LLM provider:
-  Extraction uses anywhere.client.reason() (Nebius/Nemotron) directly
+  Extraction uses anywhere.client.reason() (Anthropic) directly
   rather than activegraph's @llm_behavior, which requires an ActiveGraph
-  LLM provider configured for the Nebius endpoint. Migrate to
+  LLM provider configured for the Anthropic endpoint. Migrate to
   @llm_behavior once that provider is wired up.
 """
 
@@ -243,7 +243,7 @@ Extraction rules:
 
 
 def _call_extractor(text: str, source_label: str) -> dict:
-    """Call Nemotron-Super to extract entities. Returns parsed dict or empty structure."""
+    """Call Claude Sonnet to extract entities. Returns parsed dict or empty structure."""
     prompt = f"Source: {source_label}\n\n{text}\n\nExtract teamwork graph entities."
     raw = reason(prompt, system=_EXTRACTION_SYSTEM, model=Model.SUPER)
     parsed = parse_json(raw)

@@ -202,10 +202,10 @@ FirmOS is not a fully built product. In the current prototype:
 
 - **In-band:** The agent prompts are written with explicit scope definitions. Bira auto-approve only fires for personal context (backyard, ADU, off-hours). Work-context intents require more deliberate confirmation.
 
-- **Out-of-band:** All API calls go through a single FastAPI server (`api.py`). Every call is logged. The server acts as the gateway — a single choke point for all Nemotron traffic.
+- **Out-of-band:** All API calls go through a single FastAPI server (`api.py`). Every call is logged. The server acts as the gateway — a single choke point for all Claude traffic.
 
 - **Audit log:** `runs/` in each project repository is append-only. No action can be silently erased.
 
-- **Revocation:** The `NEBIUS_API_KEY` environment variable is the effective kill switch for the reasoning layer. Removing it from the deployment immediately terminates all AI capability.
+- **Revocation:** The `ANTHROPIC_API_KEY` environment variable is the effective kill switch for the reasoning layer. Removing it immediately terminates all AI capability.
 
-The full FirmOS vision — enterprise gateway integration, SCIM-based credential management, real-time CISO dashboard — is the roadmap beyond the hackathon prototype.
+The full FirmOS vision — enterprise gateway integration, SCIM-based credential management, real-time CISO dashboard — is the roadmap in the roadmap beyond v1.

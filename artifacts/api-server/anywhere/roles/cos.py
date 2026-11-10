@@ -86,7 +86,7 @@ Respond in JSON:
 }}"""
 
     prompt = f"Survey this portfolio and determine what requires attention:\n\n{portfolio_text}"
-    console.print("  [dim]Reasoning with Nemotron Ultra...[/dim]")
+    console.print("  [dim]Reasoning with Claude Opus...[/dim]")
     raw = reason(prompt, system=system, model=Model.ULTRA)
 
     result = parse_json(raw)

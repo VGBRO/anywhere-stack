@@ -1,6 +1,6 @@
 # Anywhere Stack
 
-**A repo-centric modular agent stack powered by NVIDIA Nemotron on Nebius.**
+**A repo-centric modular agent stack powered by Claude (Anthropic).**
 
 > The hardware gets you online. The control plane makes work portable.
 
@@ -29,10 +29,10 @@ Repository (canonical history + derived projections)
 
 | Model | Use |
 |-------|-----|
-| `nvidia/Nemotron-3-Ultra-550b-a55b` | CoS heartbeat, complex reasoning |
-| `nvidia/nemotron-3-super-120b-a12b` | PM triage, task planning |
-| `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | Fast routing, classification |
-| `nvidia/Nemotron-3_5-Lightning` | High-frequency, cheap calls |
+| `claude-opus-4-5` | CoS heartbeat, complex reasoning |
+| `claude-sonnet-4-5` | PM triage, task planning |
+| `claude-haiku-4-5` | Fast routing, classification |
+| `claude-haiku-4-5` | High-frequency, cheap calls |
 
 ## Entry Points
 
@@ -41,7 +41,7 @@ Repository (canonical history + derived projections)
 - `anywhere status` — show portfolio health
 - `anywhere init <name>` — initialize a new project repo
 - `anywhere slack` — start the Slack listener (mobile interface)
-- `anywhere test-nebius` — verify Nebius connection + model availability
+- `anywhere test-claude — verify Anthropic connection
 
 ## Key Files
 

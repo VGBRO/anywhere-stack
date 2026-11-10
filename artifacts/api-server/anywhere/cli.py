@@ -10,7 +10,7 @@ load_dotenv()
 
 app = typer.Typer(
     name="anywhere",
-    help="Repo-centric modular agent stack — powered by NVIDIA Nemotron on Nebius.",
+    help="Repo-centric modular agent stack — powered by Claude (Anthropic).",
     no_args_is_help=True,
 )
 graph_app = typer.Typer(help="Teamwork Graph — status, disputes, and queries.")
@@ -275,19 +275,19 @@ def graph_dispute(
 
 
 @app.command()
-def test_nebius():
-    """Test Nebius Token Factory connection and available Nemotron models."""
-    console.print("[bold]Testing Nebius Token Factory connection...[/bold]")
+def test_claude():
+    """Test Anthropic API connection and available Claude models."""
+    console.print("[bold]Testing Anthropic API connection...[/bold]")
     from anywhere.client import get_client, Model
     client = get_client()
     models = client.models.list()
-    nvidia_models = [m.id for m in models.data if "nvidia" in m.id.lower() or "nemotron" in m.id.lower()]
-    console.print(f"\n[green]✓ Connected to Nebius Token Factory[/green]")
-    console.print(f"\nNVIDIA / Nemotron models available ({len(nvidia_models)}):")
-    for m in nvidia_models:
+    claude_models = ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5"]
+    console.print(f"\n[green]✓ Connected to Anthropic API[/green]")
+    console.print(f"\nClaude models available ({len(claude_models)}):")
+    for m in claude_models:
         console.print(f"  • {m}")
 
-    console.print("\n[dim]Running test completion with Nemotron Nano...[/dim]")
+    console.print("\n[dim]Running test completion with Claude Haiku...[/dim]")
     from anywhere.client import route
     response = route("Reply with exactly: ANYWHERE STACK ONLINE", model=Model.NANO)
     console.print(f"\n[green]✓ Test completion:[/green] {response.strip()}")

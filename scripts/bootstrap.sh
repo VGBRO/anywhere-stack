@@ -34,18 +34,18 @@ if [ ! -f .env ]; then
     cp .env.example .env
     echo ""
     echo "✓ Created .env from .env.example"
-    echo "  → Edit .env and add your NEBIUS_API_KEY and Slack tokens"
+    echo "  → Edit .env and add your ANTHROPIC_API_KEY and Slack tokens"
 else
     echo "✓ .env already exists"
 fi
 
-# Verify Nebius connection
+# Verify Anthropic connection
 echo ""
-echo "Testing Nebius connection..."
+echo "Testing Anthropic connection..."
 if python3 -c "from anywhere.client import get_client; get_client()" 2>/dev/null; then
-    anywhere test-nebius 2>/dev/null || echo "  (run 'anywhere test-nebius' after setting NEBIUS_API_KEY)"
+    anywhere test-claude 2>/dev/null || echo "  (run 'anywhere test-claude' after setting ANTHROPIC_API_KEY)"
 else
-    echo "  → Set NEBIUS_API_KEY in .env then run: anywhere test-nebius"
+    echo "  → Set ANTHROPIC_API_KEY in .env then run: anywhere test-claude"
 fi
 
 echo ""
@@ -53,7 +53,7 @@ echo "=== Setup complete ==="
 echo ""
 echo "Next steps:"
 echo "  1. Edit .env with your API keys"
-echo "  2. Run: anywhere test-nebius"
+echo "  2. Run: anywhere test-claude"
 echo "  3. Run: anywhere heartbeat example-project"
 echo "  4. Run: anywhere slack  (to start the Slack listener)"
 echo ""

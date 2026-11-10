@@ -15,7 +15,7 @@ Cross-source linking (observed, high value):
 
 LLM signals (proposed, optional):
   PR body contains decision language → decision object
-  Only fires when NEBIUS_API_KEY is set and body is non-trivial.
+  Only fires when ANTHROPIC_API_KEY is set and body is non-trivial.
 
 Public API:
   GitHubConnector(project_root, graph, watched_repos)

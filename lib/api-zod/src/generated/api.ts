@@ -14,7 +14,7 @@ import * as zod from 'zod';
  */
 export const HealthCheckResponse = zod.object({
   "status": zod.string(),
-  "nebius_configured": zod.boolean().optional(),
+  "anthropic_configured": zod.boolean().optional(),
   "provider": zod.string().optional(),
   "models": zod.record(zod.string(), zod.string()).optional()
 })

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#050508">
+<title>Anywhere Stack — Neural Dark</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;background:#050508}
+
+#world{position:fixed;inset:0;z-index:0;display:block}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.28) 100%)}
+
+.screen{position:fixed;inset:0;z-index:10;
+  opacity:0;pointer-events:none;
+  transition:opacity .48s cubic-bezier(0.23,1,0.32,1),transform .48s cubic-bezier(0.23,1,0.32,1);
+  transform:scale(.96) translateY(1%)}
+.screen.active{opacity:1;pointer-events:all;transform:scale(1) translateY(0)}
+.screen.slide-up{transform:translateY(5%) scale(.97)}
+.screen.slide-up.active{transform:translateY(0) scale(1)}
+
+/* ── ARRIVAL ── */
+#s-arrival{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.arrival-symbol{margin-bottom:20px;opacity:.9}
+.arrival-name{font-size:13px;font-weight:200;letter-spacing:8px;text-transform:uppercase;
+  color:rgba(255,255,255,.65);margin-bottom:5px;text-align:center}
+.arrival-tagline{font-size:11px;font-weight:300;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.25);text-align:center;margin-bottom:56px}
+.arrival-btns{display:flex;gap:14px}
+.auth-btn{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:22px 28px;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:.5px solid rgba(255,255,255,.12);
+  border-radius:18px;cursor:pointer;
+  color:rgba(255,255,255,.70);
+  font-family:inherit;font-size:12px;font-weight:300;letter-spacing:2.5px;
+  text-transform:uppercase;
+  transition:background .2s cubic-bezier(0.23,1,0.32,1),transform .16s cubic-bezier(0.23,1,0.32,1)}
+.auth-btn:active{transform:scale(.94);background:rgba(255,255,255,.10)}
+@media(hover:hover) and (pointer:fine){
+  .auth-btn:hover{background:rgba(255,255,255,.11);transform:scale(1.02)}}
+.auth-btn svg{opacity:.55}
+.arrival-secure{position:absolute;bottom:max(40px,env(safe-area-inset-bottom,40px));
+  font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,185,64,.35)}
+
+/* ── HOME ── */
+#s-home{display:flex;flex-direction:column}
+.home-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:max(52px,env(safe-area-inset-top,52px)) 18px 0;
+  flex-shrink:0}
+.hometop-name{font-size:15px;font-weight:400;letter-spacing:-.1px;
+  color:rgba(255,255,255,.72);pointer-events:none}
+.hometop-pills{display:flex;align-items:center;gap:8px}
+.ht-online-pill{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px 6px 10px;border-radius:999px;cursor:pointer;
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(18px) saturate(180%);
+  -webkit-backdrop-filter:blur(18px) saturate(180%);
+  border:.5px solid rgba(255,255,255,.12);
+  font-family:inherit;font-size:12px;font-weight:400;letter-spacing:.2px;
+  color:rgba(255,255,255,.70);
+  transition:background .22s cubic-bezier(0.23,1,0.32,1),transform .16s cubic-bezier(0.23,1,0.32,1)}
+.ht-online-pill:active{background:rgba(255,255,255,.14)}
+.ht-online-pill.offline{background:rgba(255,60,60,.14);border-color:rgba(255,100,80,.25)}
+.ht-dot{width:6px;height:6px;border-radius:50%;background:#34d058;flex-shrink:0;transition:background .3s}
+.ht-online-pill.offline .ht-dot{background:#ff453a}
+.ht-firm-pill{
+  padding:6px 12px;border-radius:8px;cursor:pointer;
+  background:rgba(20,16,8,.90);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:.5px solid rgba(255,185,64,.20);
+  font-family:inherit;font-size:12px;font-weight:400;letter-spacing:.2px;
+  color:rgba(255,255,255,.75);
+  transition:background .22s cubic-bezier(0.23,1,0.32,1),transform .16s cubic-bezier(0.23,1,0.32,1),border-color .22s,box-shadow .22s}
+.ht-firm-pill:active{transform:scale(.93)}
+.ht-firm-pill.firm-active{
+  background:rgba(175,135,40,.88);border-color:rgba(255,185,64,.40);
+  box-shadow:0 2px 16px rgba(255,185,64,.25)}
+
+.home-greeting{flex:1;padding:22px 26px 24px;display:flex;flex-direction:column;
+  justify-content:flex-end;pointer-events:none;min-height:0}
+.hg-salutation{font-size:40px;font-weight:200;letter-spacing:-.8px;
+  color:rgba(255,255,255,.88);line-height:1.2}
+.hg-update{font-size:18px;font-weight:300;color:rgba(255,255,255,.32);margin-top:7px}
+
+.home-panel{
+  background:rgba(10,10,16,.88);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-radius:24px 24px 0 0;
+  border-top:.5px solid rgba(255,255,255,.08);
+  padding:20px 18px 0;
+  overflow-y:auto;flex-shrink:0;max-height:62vh;
+  box-shadow:0 -2px 40px rgba(0,0,0,.30)}
+.home-panel::-webkit-scrollbar{display:none}
+
+.home-world-card{
+  background:rgba(255,185,64,.07);border:.5px solid rgba(255,185,64,.16);
+  border-radius:18px;padding:16px 18px;margin-bottom:20px;
+  cursor:pointer;transition:background .18s cubic-bezier(0.23,1,0.32,1),transform .18s cubic-bezier(0.23,1,0.32,1)}
+.home-world-card:active{background:rgba(255,185,64,.12);transform:scale(.985)}
+@media(hover:hover) and (pointer:fine){
+  .home-world-card:hover{background:rgba(255,185,64,.10);transform:scale(1.005)}}
+.hwc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.hwc-label{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  color:rgba(255,185,64,.55)}
+.hwc-headline{font-size:22px;font-weight:500;letter-spacing:-.3px;
+  color:rgba(255,255,255,.88);margin-bottom:5px}
+.hwc-update{font-size:15px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45)}
+.hwc-cta{display:inline-flex;align-items:center;gap:5px;margin-top:12px;
+  padding:7px 16px;background:rgba(255,185,64,.12);border-radius:999px;
+  font-size:13px;font-weight:400;color:rgba(255,185,64,.80)}
+
+.hp-section-lbl{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);margin-bottom:6px;padding:0 2px}
+.hp-project-list{display:flex;flex-direction:column}
+
+@keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.hp-proj-row{display:flex;align-items:center;gap:14px;padding:13px 6px;
+  border-bottom:.5px solid rgba(255,255,255,.05);cursor:pointer;
+  transition:background .16s cubic-bezier(0.23,1,0.32,1);
+  animation:rowIn .35s cubic-bezier(0.23,1,0.32,1) both;
+  animation-delay:calc(var(--row-i,0)*55ms);
+  border-radius:8px;margin:0 -4px}
+.hp-proj-row:last-child{border-bottom:none;padding-bottom:0}
+.hp-proj-row:active{opacity:.55}
+@media(hover:hover) and (pointer:fine){
+  .hp-proj-row:hover{background:rgba(255,255,255,.04)}}
+.hp-proj-icon{width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hp-proj-icon.personal{background:rgba(80,200,140,.10)}
+.hp-proj-icon.work{background:rgba(80,140,220,.12)}
+.hp-proj-name{flex:1;font-size:16px;font-weight:400;letter-spacing:-.1px;color:rgba(255,255,255,.80)}
+.hp-proj-chevron{color:rgba(255,255,255,.20);font-size:16px}
+
+.home-bottom-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px max(28px,env(safe-area-inset-bottom,28px));
+  background:rgba(10,10,16,.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  flex-shrink:0}
+.hbn-icon{width:44px;height:44px;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:rgba(255,255,255,.28);transition:color .15s}
+.hbn-icon:active{color:rgba(255,255,255,.70)}
+@media(hover:hover) and (pointer:fine){.hbn-icon:hover{color:rgba(255,255,255,.65)}}
+.hbn-talk{display:flex;align-items:center;gap:8px;padding:13px 26px;
+  border-radius:999px;background:rgba(255,185,64,.90);border:none;font-family:inherit;
+  font-size:15px;font-weight:600;color:#050508;cursor:pointer;
+  transition:background .18s cubic-bezier(0.23,1,0.32,1),transform .14s cubic-bezier(0.23,1,0.32,1);
+  letter-spacing:-.1px}
+.hbn-talk:active{transform:scale(.94);filter:brightness(1.1)}
+@media(hover:hover) and (pointer:fine){
+  .hbn-talk:hover{background:rgba(255,185,64,1.0)}}
+
+/* ── PRESENCE ── */
+#s-presence{
+  background:rgba(6,6,12,.96);
+  backdrop-filter:blur(32px) saturate(180%);
+  -webkit-backdrop-filter:blur(32px) saturate(180%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.presence-back{
+  position:absolute;top:max(52px,env(safe-area-inset-top,52px));left:24px;
+  font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.30);cursor:pointer;transition:color .2s}
+.presence-back:active{color:rgba(255,255,255,.60)}
+.presence-text-zone{
+  text-align:center;padding:0 36px;margin-bottom:48px;min-height:90px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px}
+#pr-transcript{font-size:18px;font-weight:300;letter-spacing:-.2px;line-height:1.6;
+  color:rgba(255,255,255,.30);font-style:italic;min-height:28px}
+#pr-response{font-size:18px;font-weight:300;letter-spacing:-.2px;line-height:1.6;
+  color:rgba(255,255,255,.80);opacity:0;transform:translateY(6px);
+  transition:opacity .32s cubic-bezier(0.23,1,0.32,1),transform .32s cubic-bezier(0.23,1,0.32,1)}
+#pr-response.vis{opacity:1;transform:none}
+
+.voice-orb-wrap{position:relative;display:flex;align-items:center;justify-content:center;
+  width:120px;height:120px}
+.voice-orb-aura{position:absolute;inset:-16px;border-radius:50%;
+  background:conic-gradient(
+    rgba(255,185,64,.45) 0deg,
+    rgba(255,140,40,.40) 90deg,
+    rgba(255,210,100,.45) 180deg,
+    rgba(220,160,40,.40) 270deg,
+    rgba(255,185,64,.45) 360deg);
+  filter:blur(14px);animation:auraRotate 10s linear infinite;opacity:.65}
+@keyframes auraRotate{to{transform:rotate(360deg)}}
+.voice-orb-aura.active{animation-duration:3.5s;opacity:1}
+.voice-orb{
+  width:96px;height:96px;border-radius:50%;
+  background:rgba(255,185,64,.12);
+  backdrop-filter:blur(10px);
+  border:.5px solid rgba(255,185,64,.30);
+  box-shadow:0 0 40px rgba(255,185,64,.15),0 0 0 1px rgba(255,185,64,.12);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;z-index:1;
+  transition:transform .18s cubic-bezier(0.23,1,0.32,1),box-shadow .3s}
+.voice-orb:active{transform:scale(.95)}
+.voice-orb svg{opacity:.70}
+@keyframes orbBreath{0%,100%{transform:scale(1);box-shadow:0 0 40px rgba(255,185,64,.15)}
+  50%{transform:scale(1.07);box-shadow:0 0 60px rgba(255,185,64,.35)}}
+.voice-orb.listening{animation:orbBreath 2s cubic-bezier(0.37,0,0.63,1) infinite}
+.presence-status{margin-top:40px;
+  font-size:11px;font-weight:300;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(255,185,64,.55)}
+
+/* ── BRAIN ── */
+#s-brain{
+  background:rgba(8,8,14,.94);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  display:flex;flex-direction:column;overflow:hidden}
+.brain-world-peek{height:max(52px,env(safe-area-inset-top,52px));flex-shrink:0;background:transparent}
+.brain-back{
+  padding:14px 22px 0;font-size:12px;font-weight:300;letter-spacing:2px;
+  text-transform:uppercase;color:rgba(255,255,255,.30);cursor:pointer;flex-shrink:0}
+.brain-back:active{color:rgba(255,255,255,.60)}
+.brain-hdr{padding:16px 24px 18px;flex-shrink:0;border-bottom:.5px solid rgba(255,255,255,.07)}
+.brain-project-name{font-size:28px;font-weight:200;letter-spacing:-.4px;color:rgba(255,255,255,.88);line-height:1.2}
+.brain-project-meta{font-size:11px;font-weight:400;letter-spacing:2.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.28);margin-top:5px}
+.brain-tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 20px 0;flex-shrink:0}
+.brain-tabs::-webkit-scrollbar{display:none}
+.b-tab{padding:7px 16px;border-radius:999px;border:none;font-family:inherit;
+  font-size:13px;font-weight:400;cursor:pointer;white-space:nowrap;
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);
+  transition:background .18s cubic-bezier(0.23,1,0.32,1),color .18s cubic-bezier(0.23,1,0.32,1),transform .14s cubic-bezier(0.23,1,0.32,1)}
+.b-tab.on{background:rgba(255,185,64,.14);color:rgba(255,185,64,.90);
+  border:.5px solid rgba(255,185,64,.25)}
+.b-tab:active{transform:scale(.95)}
+@media(hover:hover) and (pointer:fine){
+  .b-tab:hover:not(.on){background:rgba(255,255,255,.10);color:rgba(255,255,255,.55)}}
+.brain-body{flex:1;overflow-y:auto;padding:20px 24px max(28px,env(safe-area-inset-bottom,28px));
+  transition:opacity .16s cubic-bezier(0.23,1,0.32,1)}
+.brain-body.fading{opacity:0}
+.brain-body::-webkit-scrollbar{display:none}
+.bb-lbl{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.25);margin-bottom:12px}
+.bb-body{font-size:17px;font-weight:400;letter-spacing:-.15px;line-height:1.8;color:rgba(255,255,255,.72)}
+.bb-actions{list-style:none;display:flex;flex-direction:column;gap:10px}
+.bb-action{display:flex;gap:12px;align-items:flex-start;
+  padding:13px 16px;background:rgba(255,255,255,.04);
+  border-radius:14px;border:.5px solid rgba(255,255,255,.07)}
+.bb-pip{width:5px;height:5px;border-radius:50%;margin-top:8px;flex-shrink:0}
+.pip-p{background:rgba(80,200,140,.75)}
+.pip-w{background:rgba(80,140,220,.75)}
+.bb-atext{font-size:15px;font-weight:400;line-height:1.55;color:rgba(255,255,255,.68)}
+.brain-wim-link{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:18px 0 0;padding:14px 16px;
+  background:rgba(255,185,64,.07);border-radius:14px;border:.5px solid rgba(255,185,64,.14);
+  cursor:pointer;transition:background .18s}
+.brain-wim-link:active{background:rgba(255,185,64,.13)}
+@media(hover:hover) and (pointer:fine){.brain-wim-link:hover{background:rgba(255,185,64,.11)}}
+.wim-lbl{font-size:14px;font-weight:400;color:rgba(255,185,64,.70)}
+.wim-arr{color:rgba(255,185,64,.45)}
+
+/* ── WORK IN MOTION ── */
+#s-work{
+  background:rgba(8,8,14,.94);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  display:flex;flex-direction:column;overflow:hidden}
+.work-world-peek{height:max(52px,env(safe-area-inset-top,52px));flex-shrink:0}
+.work-back{padding:14px 22px 0;font-size:12px;font-weight:300;letter-spacing:2px;
+  text-transform:uppercase;color:rgba(255,255,255,.30);cursor:pointer;flex-shrink:0}
+.work-back:active{color:rgba(255,255,255,.60)}
+.work-hdr{padding:16px 24px 14px;flex-shrink:0;border-bottom:.5px solid rgba(255,255,255,.07)}
+.work-title{font-size:22px;font-weight:200;letter-spacing:-.3px;color:rgba(255,255,255,.88)}
+.work-sub{font-size:13px;font-weight:400;letter-spacing:.5px;color:rgba(255,255,255,.30);margin-top:4px}
+.work-body{flex:1;overflow-y:auto;padding:18px 22px max(28px,env(safe-area-inset-bottom,28px))}
+.work-body::-webkit-scrollbar{display:none}
+.work-section-lbl{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.24);margin-bottom:10px}
+.work-items{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.work-item{display:flex;align-items:flex-start;gap:12px;
+  padding:13px 16px;border-radius:14px;border:.5px solid rgba(255,255,255,.06)}
+.work-item.autonomous{background:rgba(80,200,140,.06);border-color:rgba(80,200,140,.12)}
+.work-item.approval{background:rgba(255,185,64,.07);border-color:rgba(255,185,64,.18)}
+.wi-icon{width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center}
+.wi-auto-icon{background:rgba(80,200,140,.12)}
+.wi-approval-icon{background:rgba(255,185,64,.14)}
+.wi-text{flex:1}
+.wi-title{font-size:14px;font-weight:400;color:rgba(255,255,255,.75);line-height:1.4}
+.wi-detail{font-size:12px;font-weight:400;color:rgba(255,255,255,.35);margin-top:2px}
+.wi-action{display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  padding:6px 14px;background:rgba(255,185,64,.14);border-radius:999px;
+  font-size:12px;font-weight:500;color:rgba(255,185,64,.85);cursor:pointer;
+  border:none;font-family:inherit;transition:background .15s}
+.wi-action:active{background:rgba(255,185,64,.24)}
+.wi-status{display:inline-block;margin-top:6px;
+  font-size:11px;font-weight:300;letter-spacing:1px;color:rgba(80,200,140,.8)}
+.wi-status::before{content:'';display:inline-block;width:5px;height:5px;
+  border-radius:50%;background:rgba(80,200,140,.7);margin-right:6px;vertical-align:middle;
+  animation:wiBlink 2s ease-in-out infinite}
+@keyframes wiBlink{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:108px;left:50%;
+  transform:translateX(-50%) translateY(6px);
+  background:rgba(20,20,30,.92);backdrop-filter:blur(20px);
+  border:.5px solid rgba(255,185,64,.20);border-radius:999px;padding:8px 18px;
+  font-size:13px;font-weight:400;color:rgba(255,255,255,.75);white-space:nowrap;
+  opacity:0;pointer-events:none;z-index:50;transition:opacity .22s,transform .22s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+
+<canvas id="world"></canvas>
+<div id="vignette"></div>
+
+<!-- ARRIVAL -->
+<div id="s-arrival" class="screen active">
+  <div class="arrival-symbol">
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,0.55)" stroke-width="1"/>
+      <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,0.30)" stroke-width="1"
+        transform="rotate(60 22 22)"/>
+      <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,0.18)" stroke-width="1"
+        transform="rotate(120 22 22)"/>
+      <circle cx="22" cy="22" r="2.5" fill="rgba(255,185,64,0.70)"/>
+    </svg>
+  </div>
+  <div class="arrival-name">Anywhere Stack</div>
+  <div class="arrival-tagline">Your intelligence, everywhere</div>
+  <div class="arrival-btns">
+    <button class="auth-btn" onclick="doAuth('face')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>
+      </svg>
+      Face
+    </button>
+    <button class="auth-btn" onclick="doAuth('voice')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+      Voice
+    </button>
+  </div>
+  <div class="arrival-secure">Secured by FirmOS · Powered by Claude</div>
+</div>
+
+<!-- HOME -->
+<div id="s-home" class="screen slide-up">
+  <div class="home-topbar">
+    <span class="hometop-name">Anywhere Stack</span>
+    <div class="hometop-pills">
+      <button class="ht-online-pill" id="ht-online" onclick="toggleHomeOnline()">
+        <span class="ht-dot"></span>
+        <span id="ht-online-lbl">Online</span>
+      </button>
+      <button class="ht-firm-pill" id="ht-firm" onclick="toggleHomeFirm()">Firm OS</button>
+    </div>
+  </div>
+  <div class="home-greeting">
+    <div class="hg-salutation" id="greeting-text">Good evening.</div>
+    <div class="hg-update">Your world is moving.</div>
+  </div>
+  <div class="home-panel">
+    <div class="home-world-card" onclick="openProject(0)">
+      <div class="hwc-header">
+        <span class="hwc-label">Your World</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,185,64,0.45)" stroke-width="1.5" stroke-linecap="round">
+          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
+        </svg>
+      </div>
+      <div class="hwc-headline" id="hwc-headline">3 projects in motion</div>
+      <div class="hwc-update" id="hwc-update">Your Backyard ADU plan is ready for review.</div>
+      <div class="hwc-cta">View Project Brain
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+    <div class="hp-section-lbl">Continue where you left off</div>
+    <div class="hp-project-list" id="hp-project-list"></div>
+  </div>
+  <div class="home-bottom-nav">
+    <button class="hbn-icon" aria-label="Home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+    <button class="hbn-talk" onclick="goPresence()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      Talk to Stack
+    </button>
+    <button class="hbn-icon" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- PRESENCE -->
+<div id="s-presence" class="screen slide-up">
+  <div class="presence-back" onclick="goHome()">← Done</div>
+  <div class="presence-text-zone">
+    <div id="pr-transcript">Say anything. I'm here.</div>
+    <div id="pr-response"></div>
+  </div>
+  <div class="voice-orb-wrap">
+    <div class="voice-orb-aura" id="orb-aura"></div>
+    <div class="voice-orb" id="voice-orb" onclick="toggleListening()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,185,64,0.70)" stroke-width="1.5" stroke-linecap="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="18" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22"/>
+      </svg>
+    </div>
+  </div>
+  <div class="presence-status" id="presence-status">Tap to speak</div>
+  <div id="presence-text-input" style="display:none;margin-top:28px;width:calc(100% - 48px)">
+    <div style="display:flex;gap:8px">
+      <input id="text-intent" type="text" placeholder="Type anything…"
+        style="flex:1;padding:12px 16px;border-radius:12px;border:.5px solid rgba(255,185,64,.25);
+          background:rgba(255,255,255,.06);font-family:inherit;font-size:16px;font-weight:300;
+          color:rgba(255,255,255,.80);outline:none;caret-color:rgba(255,185,64,.8)"
+        onkeydown="if(event.key==='Enter')submitTextIntent()">
+      <button onclick="submitTextIntent()"
+        style="padding:12px 18px;border-radius:12px;background:rgba(255,185,64,.88);border:none;
+          color:#050508;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- BRAIN -->
+<div id="s-brain" class="screen slide-up">
+  <div class="brain-world-peek"></div>
+  <div class="brain-back" onclick="goHome()">← Projects</div>
+  <div class="brain-hdr">
+    <div class="brain-project-name" id="brain-name"></div>
+    <div class="brain-project-meta" id="brain-meta"></div>
+  </div>
+  <div class="brain-tabs" id="brain-tabs"></div>
+  <div class="brain-body" id="brain-body"></div>
+</div>
+
+<!-- WORK -->
+<div id="s-work" class="screen slide-up">
+  <div class="work-world-peek"></div>
+  <div class="work-back" onclick="goBrain()">← Brain</div>
+  <div class="work-hdr">
+    <div class="work-title" id="work-title">Stack is working.</div>
+    <div class="work-sub" id="work-sub">Backyard ADU · Updated just now</div>
+  </div>
+  <div class="work-body" id="work-body"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+var projects = [
+  {id:'grid',name:'Agentforce Grid Pilot',scope:'work',tags:['agentforce','grid','cs'],
+    goal:'Deploy Grid in 10 customer orgs within 90 days to prove consumption lift.',
+    state:'Legal cleared. 4 grids validated in grid-org. Workshop vs 1:1 model decision pending.',
+    decision:'MeshMesh deployment: full copy sandbox + Data Mask. Agentforce Builder SKU provisions sandbox.',
+    actions:['Resolve workshop vs 1:1 model decision','Identify first 3 pilot customers','Prepare brief for Ivan and Katie'],
+    memory:'Legal cleared July 2026. 4 grids validated. Success stories needed before headcount ask.',
+    activity:{
+      autonomous:[
+        {title:'Mapping 10 candidate customer orgs',detail:'Cross-referencing Agentforce Builder SKU holders with CS engagement history',status:'In progress'},
+        {title:'Drafting workshop vs 1:1 decision brief',detail:'Synthesizing pilot-to-playbook model against field capacity constraints',status:'In progress'}
+      ],
+      approval:[{title:'Present model decision to Ivan and Katie',detail:'Brief ready — confirm timing for headcount conversation'}]
+    }
+  },
+  {id:'india',name:'India AI Infrastructure',scope:'work',tags:['policy','ai','india'],
+    goal:'Publish analysis on India\'s position in the global AI infrastructure race.',
+    state:'Outline complete. Reviewing AI infrastructure partnerships.',
+    decision:'Lead with sovereign compute angle — more differentiated than the talent narrative.',
+    actions:['Pull latest TRAI spectrum data','Interview IIT Delhi AI lab contact','Draft intro'],
+    memory:'Key thesis: India builds compute before governance — opposite of EU. Three-year window.',
+    activity:{autonomous:[{title:'Reviewing AI infrastructure partnerships docs',detail:'Extracting investment figures and compute commitments',status:'In progress'}],approval:[{title:'Request interview with IIT Delhi AI lab',detail:'Draft outreach email prepared'}]}
+  },
+  {id:'anywhere',name:'Anywhere Stack',scope:'work',tags:['ai','product','demo'],
+    goal:'Ship prototype and Loom demo for demo by Oct 30.',
+    state:'Ambient OS v2 building. Claude pipeline live.',
+    decision:'Lead with the Bira offline moment. KOA is the deeper story.',
+    actions:['Record Loom demo (3 min max)','Make repo public before deadline','Rotate API key'],
+    memory:'Built on Claude. FirmOS is the trust layer.',
+    activity:{autonomous:[{title:'Drafting Loom demo script',detail:'3-minute walkthrough focusing on Bira moment',status:'In progress'}],approval:[{title:'Make GitHub repo public',detail:'Scheduled for Oct 29 — confirm to proceed early'}]}
+  },
+  {id:'telugu',name:'Telugu Thriller',scope:'personal',tags:['writing','film','script'],
+    goal:'Complete 90-page feature script — psychological thriller, Hyderabad tech sector.',
+    state:'Act 1 complete (28 pages). Act 2 stalled at midpoint reversal.',
+    decision:'Protagonist morally grey from page 1.',
+    actions:['Write midpoint betrayal reveal','Share Act 1 with writing group'],
+    memory:'Title: "The Architect." Tone: Andhadhun × Drishyam.',
+    activity:{autonomous:[],approval:[{title:'Share Act 1 draft with writing group',detail:'6 members — confirm recipients before sending'}]}
+  },
+  {id:'koa',name:'KOA Positioning',scope:'work',tags:['salesforce','koa','strategy'],
+    goal:'Draft internal positioning on how KOA differentiates Salesforce AI.',
+    state:'Research phase. Mapping KOA tiers against competitors.',
+    decision:'Lead with enterprise trust, not benchmarks.',
+    actions:['Complete competitive matrix','Interview 2 AEs','Draft exec summary'],
+    memory:'Anywhere Stack is a live preview of tiered Claude model routing.',
+    activity:{autonomous:[{title:'Building competitive capability matrix',detail:'Comparing KOA tiers vs GPT-4o and Claude Sonnet',status:'In progress'}],approval:[]}
+  }
+];
+
+var currentProjectIdx = 0;
+var listening = false, recognition = null;
+var homeIsOnline = true, homeIsFirm = false, homeTab = 'online';
+var meshAttract = false;
+
+var PROJ_ICONS = {
+  grid:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(80,140,220,.7)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
+  india:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(80,140,220,.7)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  anywhere:'<svg width="16" height="16" viewBox="0 0 44 44" fill="none"><ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,.7)" stroke-width="1.5"/><ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,.5)" stroke-width="1.5" transform="rotate(60 22 22)"/><ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(255,185,64,.35)" stroke-width="1.5" transform="rotate(120 22 22)"/></svg>',
+  telugu:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(80,200,140,.7)" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  koa:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(80,140,220,.7)" stroke-width="1.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  adu:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(80,200,140,.7)" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+};
+
+function esc(s){var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
+// ── GREETING ──────────────────────────────────────────────────────────────
+function tick(){
+  var n=new Date(),h=n.getHours();
+  var gr=document.getElementById('greeting-text');
+  if(gr) gr.textContent=h<5?'Good night.':(h<12?'Good morning.':(h<17?'Good afternoon.':'Good evening.'));
+}
+tick(); setInterval(tick,30000);
+
+// ── NEURAL MESH CANVAS ────────────────────────────────────────────────────
+(function(){
+  var cv=document.getElementById('world'),ctx=null,W=0,H=0,animT=0;
+  var N=180,nodes=[];
+
+  // Seed nodes deterministically — no Math.random()
+  for(var i=0;i<N;i++){
+    var fx=(i*2654435761%1e9)/1e9;
+    var fy=(i*1234567891%1e9)/1e9;
+    var fvx=(i*987654323%1e9)/1e9;
+    var fvy=(i*1122334455%1e9)/1e9;
+    var fph=(i*998877665%1e9)/1e9;
+    nodes.push({
+      fx:fx,fy:fy,
+      x:0,y:0,
+      vx:(fvx-0.5)*0.35,vy:(fvy-0.5)*0.35,
+      ax:fvx*0.18,ay:fvy*0.13,
+      phx:fph*Math.PI*2,phy:(1-fph)*Math.PI*2,
+      r:1.4+fx*1.0
+    });
+  }
+
+  function resize(){
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth;H=window.innerHeight;
+    cv.width=W*dpr;cv.height=H*dpr;
+    cv.style.width=W+'px';cv.style.height=H+'px';
+    ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+    // Init positions
+    nodes.forEach(function(n){n.x=n.fx*W;n.y=n.fy*H;});
+  }
+
+  var meshT=0,lastMeshUpdate=0;
+
+  function updateMesh(t){
+    var cx=W/2,cy=H/2;
+    nodes.forEach(function(nd){
+      // Sine drift
+      nd.x+=Math.sin(t*0.4+nd.phx)*0.28+nd.vx*0.06;
+      nd.y+=Math.cos(t*0.32+nd.phy)*0.22+nd.vy*0.06;
+      // Boundary wrap
+      if(nd.x<-10)nd.x=W+10;if(nd.x>W+10)nd.x=-10;
+      if(nd.y<-10)nd.y=H+10;if(nd.y>H+10)nd.y=-10;
+      // Attraction toward center when in presence mode
+      if(meshAttract){
+        nd.x+=(cx-nd.x)*0.008;
+        nd.y+=(cy-nd.y)*0.008;
+      }
+    });
+  }
+
+  function draw(t){
+    if(!ctx)return;
+
+    // Background — deep dark gradient
+    var bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#050510');
+    bg.addColorStop(0.6,'#040408');
+    bg.addColorStop(1,'#030303');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    // Subtle ambient glow in center
+    var glow=ctx.createRadialGradient(W/2,H*0.4,0,W/2,H*0.4,W*0.45);
+    glow.addColorStop(0,'rgba(60,50,15,0.08)');
+    glow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+
+    // Draw connections
+    ctx.save();
+    var thresh=120,threshSq=thresh*thresh;
+    for(var i=0;i<N;i++){
+      var a=nodes[i];
+      for(var j=i+1;j<N;j++){
+        var b=nodes[j];
+        var dx=a.x-b.x,dy=a.y-b.y;
+        var dsq=dx*dx+dy*dy;
+        if(dsq<threshSq){
+          var alpha=(1-Math.sqrt(dsq)/thresh)*0.18;
+          ctx.strokeStyle='rgba(255,190,60,'+alpha.toFixed(3)+')';
+          ctx.lineWidth=0.5;
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+
+    // Draw nodes
+    ctx.save();
+    nodes.forEach(function(nd){
+      ctx.globalAlpha=0.60;
+      ctx.fillStyle='rgba(255,200,80,1)';
+      ctx.beginPath();ctx.arc(nd.x,nd.y,nd.r,0,Math.PI*2);ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  var last=0,meshAccum=0;
+  function frame(ts){
+    var dt=Math.min((ts-last)/1000,0.05);last=ts;animT+=dt;
+    meshAccum+=dt;
+    if(meshAccum>0.05){// ~20fps mesh update
+      updateMesh(animT);
+      meshAccum=0;
+    }
+    draw(animT);
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize',function(){resize();});
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+// ── SCREEN NAVIGATION ─────────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById(id);if(el)el.classList.add('active');
+  meshAttract=(id==='s-presence');
+}
+
+function doAuth(method){buildHomeSections();showScreen('s-home');}
+
+function goHome(){
+  stopListening();
+  document.getElementById('presence-text-input').style.display='none';
+  var ti=document.getElementById('text-intent');if(ti)ti.value='';
+  showScreen('s-home');
+}
+
+function goPresence(){
+  document.getElementById('pr-transcript').textContent='Say anything. I\'m here.';
+  document.getElementById('pr-response').classList.remove('vis');
+  document.getElementById('pr-response').textContent='';
+  document.getElementById('presence-status').textContent='Tap to speak';
+  document.getElementById('orb-aura').classList.remove('active');
+  showScreen('s-presence');
+}
+
+function goBrain(){showScreen('s-brain');}
+
+function openProject(idx){
+  currentProjectIdx=idx;
+  var p=projects[idx];
+  document.getElementById('brain-name').textContent=p.name;
+  document.getElementById('brain-meta').textContent=
+    p.scope.charAt(0).toUpperCase()+p.scope.slice(1)+'  ·  '+(p.tags||[]).slice(0,2).join(', ');
+  var TABS=[{k:'goal',l:'Goal'},{k:'state',l:'State'},{k:'decision',l:'Direction'},
+            {k:'actions',l:'Actions'},{k:'memory',l:'Memory'}];
+  var tr=document.getElementById('brain-tabs');
+  tr.innerHTML=TABS.map(function(t,i){
+    return '<button class="b-tab'+(i===0?' on':'')+'" onclick="showBTab(\''+t.k+'\',this)">'+t.l+'</button>';
+  }).join('');
+  fillBrain(p,'goal');
+  showScreen('s-brain');
+}
+
+function showBTab(key,el){
+  document.querySelectorAll('.b-tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  fillBrain(projects[currentProjectIdx],key);
+}
+
+function fillBrain(p,key){
+  var body=document.getElementById('brain-body');
+  body.classList.add('fading');
+  setTimeout(function(){_fillBrainContent(p,key,body);body.classList.remove('fading');},100);
+}
+
+function _fillBrainContent(p,key,body){
+  var cls=p.scope==='work'?'pip-w':'pip-p';
+  var labels={goal:'Intent / Goal',state:'Current State',decision:'Direction & Decisions',memory:'Persistent Memory'};
+  if(key==='actions'){
+    body.innerHTML='<div class="bb-lbl">Next Actions</div><ul class="bb-actions">'+
+      (p.actions||[]).map(function(a){
+        return '<li class="bb-action"><div class="bb-pip '+esc(cls)+'"></div><span class="bb-atext">'+esc(a)+'</span></li>';
+      }).join('')+'</ul>'+
+      '<div class="brain-wim-link" onclick="openWork()">'+
+        '<span class="wim-lbl">See Stack working on this →</span>'+
+        '<span class="wim-arr">›</span>'+
+      '</div>';
+  } else {
+    body.innerHTML='<div class="bb-lbl">'+esc(labels[key]||key)+'</div>'+
+      '<div class="bb-body">'+esc(p[key]||'–')+'</div>';
+    if(key==='state'){
+      body.innerHTML+='<div class="brain-wim-link" onclick="openWork()" style="margin-top:18px">'+
+        '<span class="wim-lbl">See Stack working on this</span>'+
+        '<span class="wim-arr">›</span>'+
+      '</div>';
+    }
+  }
+}
+
+function openWork(){
+  var p=projects[currentProjectIdx];
+  document.getElementById('work-title').textContent='Stack is working.';
+  document.getElementById('work-sub').textContent=p.name+' · Updated just now';
+  var act=p.activity||{autonomous:[],approval:[]};
+  var html='';
+  if(act.autonomous&&act.autonomous.length){
+    html+='<div class="work-section-lbl">In progress</div><ul class="work-items">';
+    act.autonomous.forEach(function(item){
+      html+='<li class="work-item autonomous">'+
+        '<div class="wi-icon wi-auto-icon">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(80,200,130,0.7)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'+
+        '</div>'+
+        '<div class="wi-text">'+
+          '<div class="wi-title">'+esc(item.title)+'</div>'+
+          '<div class="wi-detail">'+esc(item.detail)+'</div>'+
+          '<div class="wi-status">'+esc(item.status)+'</div>'+
+        '</div></li>';
+    });
+    html+='</ul>';
+  }
+  if(act.approval&&act.approval.length){
+    html+='<div class="work-section-lbl">Needs your go-ahead</div><ul class="work-items">';
+    act.approval.forEach(function(item,i){
+      html+='<li class="work-item approval">'+
+        '<div class="wi-icon wi-approval-icon">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,185,64,0.7)" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>'+
+        '</div>'+
+        '<div class="wi-text">'+
+          '<div class="wi-title">'+esc(item.title)+'</div>'+
+          '<div class="wi-detail">'+esc(item.detail)+'</div>'+
+          '<button class="wi-action" onclick="approveItem(this,\''+i+'\')">Approve</button>'+
+        '</div></li>';
+    });
+    html+='</ul>';
+  }
+  if(!html)html='<div style="font-size:15px;font-weight:300;color:rgba(255,255,255,.30);text-align:center;padding:40px 0">No activity yet.</div>';
+  document.getElementById('work-body').innerHTML=html;
+  showScreen('s-work');
+}
+
+function approveItem(btn){
+  btn.textContent='Approved ✓';
+  btn.style.background='rgba(80,200,140,.18)';
+  btn.style.color='rgba(80,200,140,.85)';
+  btn.disabled=true;
+  showToast('Action approved.');
+}
+
+// ── HOME LIST ─────────────────────────────────────────────────────────────
+function renderHomeProjList(key){
+  var list=document.getElementById('hp-project-list');if(!list)return;
+  var filtered=projects;
+  if(key==='firmos')   filtered=projects.filter(function(p){return p.scope==='work';});
+  if(key==='personal') filtered=projects.filter(function(p){return p.scope==='personal';});
+  var rows=filtered.map(function(p,rowIndex){
+    var i=projects.indexOf(p);
+    var icon=PROJ_ICONS[p.id]||PROJ_ICONS.koa;
+    var badge=key==='offline'?' <span style="font-size:10px;color:rgba(255,185,64,.45);letter-spacing:1px">CACHED</span>':'';
+    var row=document.createElement('div');
+    row.className='hp-proj-row';
+    row.style.setProperty('--row-i',rowIndex);
+    row.setAttribute('onclick','openProject('+i+')');
+    row.innerHTML='<div class="hp-proj-icon '+esc(p.scope)+'">'+icon+'</div>'+
+      '<span class="hp-proj-name">'+esc(p.name)+badge+'</span>'+
+      '<span class="hp-proj-chevron">›</span>';
+    return row.outerHTML;
+  });
+  list.innerHTML=rows.join('');
+}
+
+function buildHomeSections(){renderHomeProjList(homeTab);}
+
+function toggleHomeOnline(){
+  homeIsOnline=!homeIsOnline;
+  var pill=document.getElementById('ht-online');
+  var lbl=document.getElementById('ht-online-lbl');
+  pill.classList.toggle('offline',!homeIsOnline);
+  lbl.textContent=homeIsOnline?'Online':'Offline';
+  document.getElementById('hwc-headline').textContent=homeIsOnline?'3 projects in motion':'2 items cached locally';
+  document.getElementById('hwc-update').textContent=homeIsOnline?'Your Backyard ADU plan is ready for review.':'Captures will sync when you reconnect.';
+  homeTab=homeIsFirm?'firmos':(homeIsOnline?'online':'offline');
+  renderHomeProjList(homeTab);
+}
+
+function toggleHomeFirm(){
+  homeIsFirm=!homeIsFirm;
+  var pill=document.getElementById('ht-firm');
+  pill.classList.toggle('firm-active',homeIsFirm);
+  pill.textContent=homeIsFirm?'Personal':'Firm OS';
+  document.getElementById('hwc-headline').textContent=homeIsFirm?'3 work projects active':'3 projects in motion';
+  document.getElementById('hwc-update').textContent=homeIsFirm?'India AI Infrastructure needs your attention.':'Your Backyard ADU plan is ready for review.';
+  homeTab=homeIsFirm?'firmos':'online';
+  renderHomeProjList(homeTab);
+}
+
+// ── VOICE ─────────────────────────────────────────────────────────────────
+function toggleListening(){if(listening)stopListening();else startListening();}
+
+function startListening(){
+  listening=true;
+  document.getElementById('presence-status').textContent='Listening…';
+  document.getElementById('orb-aura').classList.add('active');
+  document.getElementById('voice-orb').classList.add('listening');
+  document.getElementById('pr-transcript').textContent='…';
+  document.getElementById('pr-response').classList.remove('vis');
+  document.getElementById('pr-response').textContent='';
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    listening=false;
+    document.getElementById('orb-aura').classList.remove('active');
+    document.getElementById('voice-orb').classList.remove('listening');
+    document.getElementById('pr-transcript').textContent='Type below.';
+    document.getElementById('presence-status').textContent='';
+    document.getElementById('presence-text-input').style.display='block';
+    setTimeout(function(){document.getElementById('text-intent').focus();},100);
+    return;
+  }
+  recognition=new SR();
+  recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
+  var final='',silT;
+  recognition.onresult=function(e){
+    var int='';final='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else int+=e.results[i][0].transcript;
+    }
+    document.getElementById('pr-transcript').textContent=(final+int)||'…';
+    clearTimeout(silT);
+    if(final)silT=setTimeout(function(){try{recognition.stop();}catch(e){}handleVoice(final.trim());},1400);
+  };
+  recognition.onerror=function(e){
+    stopListening();
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+      document.getElementById('pr-transcript').textContent='Type below.';
+      document.getElementById('presence-status').textContent='';
+      document.getElementById('presence-text-input').style.display='block';
+      setTimeout(function(){document.getElementById('text-intent').focus();},100);
+    }
+  };
+  recognition.start();
+}
+
+function stopListening(){
+  listening=false;
+  if(recognition){try{recognition.stop();}catch(e){}recognition=null;}
+  document.getElementById('presence-status').textContent='Tap to speak';
+  document.getElementById('orb-aura').classList.remove('active');
+  document.getElementById('voice-orb').classList.remove('listening');
+}
+
+function submitTextIntent(){
+  var ti=document.getElementById('text-intent');
+  var text=(ti&&ti.value.trim())||'';
+  if(!text)return;
+  ti.value='';
+  document.getElementById('presence-text-input').style.display='none';
+  document.getElementById('pr-transcript').textContent='"'+text+'"';
+  handleVoice(text);
+}
+
+function handleVoice(text){
+  if(!text){stopListening();return;}
+  stopListening();
+  document.getElementById('pr-transcript').textContent='"'+text+'"';
+  document.getElementById('presence-status').textContent='Thinking…';
+  var isBira=/bira|backyard|adu|adjac|dwelling/i.test(text);
+  var lc=text.toLowerCase();
+  var matched=isBira?null:(projects.find(function(p){
+    return p.tags.some(function(t){return lc.includes(t);})||
+           lc.includes(p.name.split(' ')[0].toLowerCase());
+  })||projects[0]);
+  setTimeout(function(){
+    var resp;
+    if(isBira){
+      resp='Got it. I\'ll start the Backyard ADU plan. Enjoy your time with Bira.';
+      var newADU={id:'adu',name:'Backyard ADU',scope:'personal',tags:['adu','backyard','bira','dwelling'],
+        goal:text,state:'Just started. Researching requirements.',
+        decision:'',actions:['Research permit requirements','Estimate costs','Find contractors'],
+        memory:'Started via voice. Bira was there.',
+        activity:{autonomous:[{title:'Researching ADU requirements',detail:'Pulling permit guidelines and cost benchmarks',status:'In progress'}],approval:[]}};
+      if(!projects.find(function(p){return p.id==='adu';})){
+        projects.unshift(newADU);
+        buildHomeSections();
+      }
+    } else {
+      resp='Got it — adding to '+matched.name+'.';
+    }
+    document.getElementById('pr-response').textContent=resp;
+    document.getElementById('pr-response').classList.add('vis');
+    document.getElementById('presence-status').textContent='';
+  },isBira?2400:1600);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+var toastTimer;
+function showToast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('show');},2800);
+}
+</script>
+</body>
+</html>

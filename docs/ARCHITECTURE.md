@@ -52,22 +52,22 @@ The objection to personal agents in the workplace is trust. IT and CISO cannot a
 │                    INTENT INBOX                                  │
 │  • Captures intent in any context                               │
 │  • Works offline — queues locally when no connectivity          │
-│  • Syncs to Nemotron pipeline when back online                  │
+│  • Syncs to Claude pipeline when back online                  │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
               ┌───────────────┴───────────────┐
               │ online                        │ offline
               ▼                               ▼
 ┌─────────────────────────┐   ┌───────────────────────────────────┐
-│   NEMOTRON NANO         │   │   LOCAL QUEUE                      │
+│   CLAUDE HAIKU         │   │   LOCAL QUEUE                      │
 │   Intent Router         │   │   (keyword match + store)          │
-│   ~100ms, cheap         │   │   Ollama/nemotron-mini if avail.   │
-│   Routes to project     │   │   Flushes to Nemotron on sync     │
+│   ~100ms, cheap         │   │   Ollama/llama3.2:1b if avail.   │
+│   Routes to project     │   │   Flushes to Claude on sync     │
 └────────────┬────────────┘   └───────────────────────────────────┘
              │
              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                 NEMOTRON ULTRA                                   │
+│                 CLAUDE OPUS                                   │
 │                 Chief of Staff                                   │
 │  • Deep reasoning over the full project portfolio               │
 │  • Generates structured Project Brain updates                   │
@@ -104,7 +104,7 @@ The objection to personal agents in the workplace is trust. IT and CISO cannot a
 
 ---
 
-## Nemotron Model Routing Strategy
+## Claude Model Routing Strategy
 
 Not all reasoning is equal. Calling the largest model for every operation wastes money and adds latency. Anywhere Stack routes each call to the right model tier.
 
@@ -131,10 +131,10 @@ This is the same principle as a human organization: a junior analyst triages the
 
 | Model | Tier | Used For | Why |
 |---|---|---|---|
-| `Nemotron-3-Ultra-550b-a55b` | 550B | Chief of Staff reasoning | Deep portfolio analysis, brain updates |
-| `nemotron-3-super-120b-a12b` | 120B | Project Manager triage | Task planning, sequencing |
-| `NVIDIA-Nemotron-3-Nano-30B-A3B` | 30B | Intent routing | Fast classification (~100ms) |
-| `Nemotron-3_5-Lightning` | Fast | High-frequency calls | Projection generation, formatting |
+| `claude-opus-4-5` | — |Chief of Staff reasoning | Deep portfolio analysis, brain updates |
+| `claude-sonnet-4-5` | — |Project Manager triage | Task planning, sequencing |
+| `claude-haiku-4-5` | — |Intent routing | Fast classification (~100ms) |
+| `claude-haiku-4-5` | Fast | High-frequency calls | Projection generation, formatting |
 | `Hermes-4-405B` | 405B | Tool calling | Agentic loops with structured tool use |
 
 ---
@@ -146,17 +146,17 @@ The name "Anywhere Stack" is literal. The system must work when you're at the pa
 ```
 OFFLINE                          ONLINE
    │                                │
-   ├─ Keyword intent capture        ├─ Nemotron NANO routing
-   ├─ Local project match           ├─ Nemotron ULTRA CoS reasoning
+   ├─ Keyword intent capture        ├─ Claude Haiku routing
+   ├─ Local project match           ├─ Claude Opus CoS reasoning
    ├─ Queue to LocalQueue[]         ├─ Full Project Brain update
    └─ Bira auto-approve             └─ Sync flush of offline queue
         (no network needed)
 ```
 
-**The Bira moment** is the flagship demo of this design: a user at the park says "go ahead and plan my ADU" while spending time with their dog Bira. The system creates the project locally, queues the research work, and responds immediately — no connectivity required. When they reconnect, the full Nemotron pipeline processes the queue and the Project Brain is fully populated.
+**The Bira moment** is the flagship demo of this design: a user at the park says "go ahead and plan my ADU" while spending time with their dog Bira. The system creates the project locally, queues the research work, and responds immediately — no connectivity required. When they reconnect, the full Claude pipeline processes the queue and the Project Brain is fully populated.
 
 The offline layer has three fallback tiers:
-1. **Ollama + nemotron-mini** — on-device inference, full classification
+1. **Ollama + llama3.2:1b** — on-device inference, full classification
 2. **Keyword matching** — zero-dependency fallback
 3. **Queue only** — capture and defer, no classification
 

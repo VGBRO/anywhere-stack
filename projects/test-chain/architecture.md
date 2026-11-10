@@ -32,22 +32,22 @@ Builders execute discrete, bounded tasks with strict authority boundaries:
 - Exiting immediately after task completion, leaving the repo in a legible state
 - Escalating to PM when encountering out-of-scope requirements or discovered constraints
 
-## Nemotron Model Tiers
-The architecture leverages NVIDIA's Nemotron model family across three tiers to optimize for different workload characteristics:
+## Claude Model Tiers
+The architecture leverages Claude's model family across three tiers to optimize for different workload characteristics:
 
-### Nemotron-3 Nano
+### Claude Haiku
 - Optimized for lightweight, high-frequency tasks
 - Used for simple classification, routing, and initial triage
 - Deployed in agent feedback loops where latency is critical
 - Typical use: Issue parsing, basic validation, metadata extraction
 
-### Nemotron-3 Super
+### Claude Sonnet
 - Balanced tier for general-purpose reasoning and generation
 - Handles most agent decision-making and content creation
 - Employed for task decomposition, planning, and standard documentation
 - Typical use: Architecture drafting, plan generation, code commenting
 
-### Nemotron-3 Ultra
+### Claude Opus
 - Highest capability tier for complex reasoning and synthesis
 - Reserved for strategic analysis, architectural decisions, and nuanced interpretation
 - Used when multiple contexts must be synthesized or ambiguity is high

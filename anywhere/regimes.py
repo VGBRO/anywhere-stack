@@ -46,7 +46,7 @@ def _diagnose_failures(portfolio_root: str, min_occurrences: int = 2) -> list[di
 
 
 def _propose_fix(pattern: dict) -> Optional[dict]:
-    """Ask Nemotron Super to diagnose and propose a minimal fix."""
+    """Ask Claude Sonnet to diagnose and propose a minimal fix."""
     from anywhere.client import reason, Model
     import re
 

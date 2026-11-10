@@ -9,7 +9,7 @@ import type { HealthStatusModels } from './healthStatusModels';
 
 export interface HealthStatus {
   status: string;
-  nebius_configured?: boolean;
+  anthropic_configured?: boolean;
   provider?: string;
   models?: HealthStatusModels;
 }

@@ -593,7 +593,7 @@ body.offline-mode .offline-ring { opacity:1; }
       </button>
     </div>
 
-    <div class="auth-footer">Secured by FirmOS &nbsp;·&nbsp; Powered by Nemotron</div>
+    <div class="auth-footer">Secured by FirmOS &nbsp;·&nbsp; Powered by Claude</div>
   </div>
 </div>
 
@@ -717,16 +717,16 @@ const projects = [
     memory:'HOA approval not required — confirmed Aug 20. Contractor: Carlos Mendez, cmendez@oakwoodcon.com, 661-445-2200.' },
   { id:'india', name:'India AI Infrastructure', scope:'work', tags:['policy','AI','research'],
     goal:'Publish analysis on India\'s position in the global AI infrastructure race.',
-    state:'Outline complete. Reviewing NVIDIA × Reliance partnership. Need GPU allocation data.',
+    state:'Outline complete. Reviewing AI infrastructure partnerships. Need GPU allocation data.',
     decision:'Focus on sovereign compute angle — more differentiated than the talent narrative.',
     actions:['Pull latest TRAI spectrum data','Interview IIT Delhi AI lab contact','Draft intro section'],
     memory:'Key thesis: India builds compute before governance — opposite of EU. 3-year window for US partnerships.' },
-  { id:'anywhere', name:'Anywhere Stack', scope:'work', tags:['hackathon','AI','NVIDIA'],
-    goal:'Ship a working prototype and Loom demo for NVIDIA × Nebius Hackathon by Oct 30.',
-    state:'FastAPI live. Nemotron pipeline working. Apple atmospheric glass UI shipped. Recording on Replit.',
+  { id:'anywhere', name:'Anywhere Stack', scope:'work', tags:['ai','product','demo'],
+    goal:'Ship a working prototype and demo.',
+    state:'FastAPI live. Claude pipeline working. Apple atmospheric glass UI shipped. Recording on Replit.',
     decision:'Lead with the Bira offline moment. KOA is the deeper story.',
-    actions:['Record Loom demo (3 min max)','Make repo public before deadline','Rotate exposed Nebius key'],
-    memory:'Built on Nemotron because Salesforce builds KOA on the same architecture. FirmOS = passport/visa trust.' },
+    actions:['Record Loom demo (3 min max)','Make repo public before deadline','Rotate exposed API key'],
+    memory:'Built on Claude. FirmOS = passport/visa trust.' },
   { id:'telugu', name:'Telugu Thriller Script', scope:'personal', tags:['creative','writing'],
     goal:'Complete 90-page feature script — psychological thriller, Hyderabad tech sector.',
     state:'Act 1 complete (28 pages). Act 2 stalled at midpoint reversal.',
@@ -738,7 +738,7 @@ const projects = [
     state:'Research phase. Mapping KOA tiers against GPT-4o and Claude Sonnet.',
     decision:'Lead with enterprise trust, not benchmarks. CISOs buy on governance.',
     actions:['Complete competitive capability matrix','Interview 2 AEs on objections','Draft exec summary — 1 page'],
-    memory:'KOA is built on Nemotron. Public information. Anywhere Stack is a live demo of KOA-style tiered routing.' }
+    memory:'Anywhere Stack is a live demo of tiered model routing with FirmOS.' }
 ];
 
 // ── Navigation ────────────────────────────────────────────────────────────────
@@ -921,13 +921,13 @@ function submitHomeIntent(){
   processIntent(text);
 }
 async function processIntent(text){
-  setIS('proc','Routing via Nemotron NANO…');
+  setIS('proc','Routing via Claude Haiku…');
   const payload=projects.map(p=>({id:p.id,name:p.name,tags:p.tags,goal:p.goal,state:p.state}));
   try{
     const res=await fetch(API_BASE+'/api/intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,projects:payload})});
     if(!res.ok)throw new Error();
     const data=await res.json();
-    setIS('proc','Processing with Nemotron ULTRA…');
+    setIS('proc','Processing with Claude Opus…');
     setTimeout(()=>{applyBrain(data);setIS('','');toast(data.response||'Brain updated.');},700);
   }catch(e){
     const m=projects.find(p=>text.toLowerCase().includes(p.name.split(' ')[0].toLowerCase()))||projects[0];
@@ -944,7 +944,7 @@ function applyBrain(data){
   const st=document.getElementById('cs-'+projects[i].id);
   if(st&&b.state)st.textContent=b.state;
   const fl=document.getElementById('flash-'+projects[i].id);
-  if(fl){fl.classList.add('on');fl.innerHTML='Updated by Nemotron → '+(b.actions?.[0]||'Brain updated');}
+  if(fl){fl.classList.add('on');fl.innerHTML='Updated by Claude → '+(b.actions?.[0]||'Brain updated');}
   if(activeProject===i)fillSheet(projects[i]);
 }
 
@@ -961,7 +961,7 @@ function toggleOnline(){
 }
 async function flushQueue(){
   if(!offlineQueue.length)return;
-  setIS('proc','Syncing '+offlineQueue.length+' intent'+(offlineQueue.length>1?'s':'')+' through Nemotron…');
+  setIS('proc','Syncing intents through Claude…');
   const payload=projects.map(p=>({id:p.id,name:p.name,tags:p.tags,goal:p.goal,state:p.state}));
   try{
     const res=await fetch(API_BASE+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({queue:offlineQueue,projects:payload})});

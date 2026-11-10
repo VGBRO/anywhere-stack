@@ -212,7 +212,7 @@ Respond in JSON with this exact structure:
 
     prompt = f"Run a heartbeat for this project. Current state:\n\n{context}"
 
-    console.print("  [dim]Reasoning with Nemotron...[/dim]")
+    console.print("  [dim]Reasoning with Claude...[/dim]")
     model = Model.ULTRA if role == "cos" else Model.SUPER
     raw = reason(prompt, system=system, model=model)
 
